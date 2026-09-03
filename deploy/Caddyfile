@@ -1,0 +1,5 @@
+# 把 your-domain.com 换成你的备案域名（不要带 https:// 前缀）
+# Caddy 会自动申请并续期 Let's Encrypt 证书，无需手动操作
+your-domain.com {
+    reverse_proxy server:8000
+}

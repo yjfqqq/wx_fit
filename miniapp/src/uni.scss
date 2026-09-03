@@ -1,0 +1,21 @@
+/* 清爽风设计变量 */
+$primary: #10b981;
+$primary-light: #d1fae5;
+$primary-dark: #059669;
+$warning: #f59e0b;
+$danger: #ef4444;
+$page-bg: #f7f9f8;
+$card-bg: #ffffff;
+$text-main: #111827;
+$text-sub: #6b7280;
+$text-hint: #9ca3af;
+$border: #eef2f1;
+$radius: 12px;
+$gap: 12px;
+
+@mixin card {
+  background: $card-bg;
+  border-radius: $radius;
+  padding: 16px;
+  margin: 0 12px 12px;
+}

@@ -1,0 +1,97 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "今天",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/record/record",
+      "style": {
+        "navigationBarTitleText": "记录",
+        "navigationBarBackgroundColor": "#F2F7F3",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/trend/trend",
+      "style": {
+        "navigationBarTitleText": "趋势",
+        "navigationBarBackgroundColor": "#F2F7F3",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "navigationBarBackgroundColor": "#F2F7F3",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/profile/wx-auth",
+      "style": {
+        "navigationBarTitleText": "微信授权",
+        "navigationBarBackgroundColor": "#F2F7F3",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/record/food-custom",
+      "style": {
+        "navigationBarTitleText": "自定义食物",
+        "navigationBarBackgroundColor": "#F2F7F3",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/profile/goal",
+      "style": {
+        "navigationBarTitleText": "目标设置",
+        "navigationBarBackgroundColor": "#F2F7F3",
+        "navigationBarTextStyle": "black"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F2F7F3",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#9AAEA2",
+    "selectedColor": "#0E9E68",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "今天",
+        "iconPath": "static/tabbar/tab_today_gray.png",
+        "selectedIconPath": "static/tabbar/tab_today_green.png"
+      },
+      {
+        "pagePath": "pages/record/record",
+        "text": "记录",
+        "iconPath": "static/tabbar/tab_record_gray.png",
+        "selectedIconPath": "static/tabbar/tab_record_green.png"
+      },
+      {
+        "pagePath": "pages/trend/trend",
+        "text": "趋势",
+        "iconPath": "static/tabbar/tab_trend_gray.png",
+        "selectedIconPath": "static/tabbar/tab_trend_green.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "static/tabbar/tab_profile_gray.png",
+        "selectedIconPath": "static/tabbar/tab_profile_green.png"
+      }
+    ]
+  }
+}

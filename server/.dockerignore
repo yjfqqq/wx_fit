@@ -1,0 +1,8 @@
+# 不打进镜像的内容（.env 等敏感文件由 docker compose 的环境变量注入）
+__pycache__/
+*.pyc
+venv/
+.venv/
+.env
+*.db
+scripts/__pycache__/

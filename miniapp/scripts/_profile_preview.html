@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>我的页 · 微信授权页流程预览（已还原）</title>
+<style>
+  :root{
+    --brand:#0E9E68; --brand-deep:#0a7a52; --brand-tint:#e8f6ef;
+    --ink:#1f2a26; --ink-2:#4a5a52; --ink-3:#7c8a82; --ink-4:#a7b3ac;
+    --card:#fff; --line:#eef2ef; --grad:linear-gradient(135deg,#16b377,#0a9a63);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+  body{background:#e9eeea;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;display:flex;justify-content:center;padding:24px;}
+  .phone{position:relative;width:390px;background:#f2f7f3;padding:14px 0 36px;border-radius:36px;box-shadow:0 20px 60px rgba(20,40,30,.18);overflow:hidden;}
+
+  /* ===== 我的页 · 顶部个人主页（整块可点，跳授权页） ===== */
+  .profile-hero{display:flex;flex-direction:column;align-items:center;padding:26px 16px 22px;margin:0 12px;
+    background:linear-gradient(180deg,#eafaf1 0%,#f6fcf8 55%,#fff 100%);border:1px solid #d4ecdf;border-radius:18px;
+    box-shadow:0 6px 18px rgba(20,40,30,.05);cursor:pointer;transition:transform .15s;}
+  .profile-hero:active{transform:scale(.985);}
+  .hero-avatar{width:92px;height:92px;border-radius:50%;background:linear-gradient(135deg,#22bd85,#0d9a63);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:40px;font-weight:700;border:3px solid #fff;
+    box-shadow:0 8px 22px rgba(14,158,104,.18);}
+  .hero-name-row{display:flex;align-items:center;justify-content:center;margin-top:12px;gap:5px;}
+  .hero-name{font-size:21px;font-weight:700;color:var(--ink);max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2;}
+  .hero-stat{margin-top:7px;font-size:12px;color:var(--ink-3);}
+
+  /* ===== 占位卡片 ===== */
+  .card{background:var(--card);border-radius:18px;padding:15px 16px;margin:12px 12px 0;box-shadow:0 6px 18px rgba(20,40,30,.05);}
+  .menu-card{padding:6px 16px;}
+  .menu{display:flex;align-items:center;justify-content:space-between;padding:11px 0;cursor:pointer;}
+  .menu-left{display:flex;align-items:center;flex:1;}
+  .menu-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;margin-right:11px;background:#f0f7f3;}
+  .menu-txt{flex:1;}
+  .menu-title{display:block;font-size:14px;color:var(--ink);}
+  .menu-sub{display:block;font-size:10px;color:var(--ink-4);margin-top:2px;}
+  .menu-arrow{color:var(--ink-4);font-size:20px;}
+  .placeholder{height:80px;display:flex;align-items:center;justify-content:center;color:var(--ink-4);font-size:12px;}
+
+  /* ===== 微信授权页（整页覆盖，模拟 navigateTo） ===== */
+  .auth-page{position:fixed;inset:0;z-index:999;display:flex;justify-content:center;align-items:flex-start;
+    background:#f2f7f3;opacity:0;pointer-events:none;transition:opacity .22s;}
+  .auth-page.show{opacity:1;pointer-events:auto;}
+  .auth-inner{width:390px;max-width:100%;height:100%;overflow-y:auto;padding:14px 12px 40px;}
+  .auth-nav{display:flex;align-items:center;gap:6px;padding:6px 4px 14px;font-size:16px;color:var(--ink);}
+  .auth-nav .back{width:28px;height:28px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
+    color:var(--ink-2);font-size:16px;box-shadow:0 2px 8px rgba(20,40,30,.08);cursor:pointer;}
+  .auth-card{background:#fff;border-radius:18px;padding:22px 18px;box-shadow:0 6px 18px rgba(20,40,30,.05);}
+  .auth-title{display:block;font-size:19px;font-weight:700;color:var(--ink);text-align:center;}
+  .auth-sub{display:block;font-size:12px;color:var(--ink-3);text-align:center;margin-top:8px;}
+  .auth-field{margin-top:22px;text-align:center;}
+  .auth-label{display:block;font-size:12px;color:var(--ink-2);margin-bottom:10px;font-weight:500;}
+  .avatar-btn{width:80px;height:80px;margin:0 auto;border-radius:50%;border:none;cursor:pointer;
+    background:var(--brand-tint);display:flex;align-items:center;justify-content:center;
+    border:3px solid #fff;box-shadow:0 8px 20px rgba(14,158,104,.14);font-size:34px;color:var(--brand-deep);}
+  .auth-tip{display:block;font-size:11px;color:var(--ink-4);margin-top:10px;}
+  .nick-input{height:46px;width:100%;background:#f1f6f3;border:1px solid #e3ece6;border-radius:10px;
+    padding:0 14px;font-size:15px;outline:none;box-sizing:border-box;color:var(--ink);}
+  .auth-info{margin-top:18px;text-align:left;}
+  .info-item{display:block;font-size:11px;color:var(--ink-4);line-height:1.9;}
+  .auth-btn{width:100%;height:48px;border:none;border-radius:999px;margin-top:22px;cursor:pointer;
+    background:var(--grad);color:#fff;font-size:16px;font-weight:600;box-shadow:0 6px 16px rgba(14,158,104,.25);}
+  .auth-btn.disabled{opacity:.45;box-shadow:none;cursor:not-allowed;}
+
+  .hint{text-align:center;font-size:11px;color:var(--ink-4);margin:14px 0 0;}
+</style>
+</head>
+<body>
+  <!-- ===== 我的页 ===== -->
+  <div class="phone">
+    <div class="profile-hero" id="heroBtn">
+      <div class="hero-avatar" id="heroAvatar">微</div>
+      <div class="hero-name-row"><span class="hero-name" id="heroName">微信用户</span></div>
+      <div class="hero-stat">累计记录 12 天</div>
+    </div>
+
+    <!-- 个人资料入口 -->
+    <div class="card menu-card">
+      <div class="menu">
+        <div class="menu-left">
+          <div class="menu-ico">📝</div>
+          <div class="menu-txt"><span class="menu-title">个人资料</span><span class="menu-sub">性别、生日、身高、活动量</span></div>
+        </div>
+        <span class="menu-arrow">›</span>
+      </div>
+    </div>
+
+    <div class="card"><div class="placeholder">… 减重目标 / 测算 / 其他 …</div></div>
+
+    <p class="hint">—— 点击顶部个人信息 → 进入微信授权页 ——</p>
+  </div>
+
+  <!-- ===== 微信授权页（wx-auth） ===== -->
+  <div class="auth-page" id="authPage">
+    <div class="auth-inner">
+      <div class="auth-nav"><span class="back" id="authBack">‹</span>微信授权</div>
+      <div class="auth-card">
+        <span class="auth-title">用微信身份开启记录</span>
+        <span class="auth-sub">授权后头像昵称将用于小程序展示，可随时修改</span>
+
+        <div class="auth-field">
+          <span class="auth-label">微信头像</span>
+          <button class="avatar-btn" id="avatarPick" title="点击更换头像">＋</button>
+          <span class="auth-tip">点击选择微信头像</span>
+        </div>
+
+        <div class="auth-field">
+          <span class="auth-label">微信昵称</span>
+          <input class="nick-input" id="nickInput" type="text" placeholder="输入昵称或使用微信昵称" maxlength="20" />
+        </div>
+
+        <div class="auth-info">
+          <span class="info-item">· 登录后数据自动关联微信账号</span>
+          <span class="info-item">· 头像仅用于小程序内展示</span>
+        </div>
+
+        <button class="auth-btn disabled" id="authSave">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 我的页顶部 → 跳转授权页
+    const authPage = document.getElementById('authPage');
+    document.getElementById('heroBtn').addEventListener('click', () => authPage.classList.add('show'));
+    document.getElementById('authBack').addEventListener('click', () => authPage.classList.remove('show'));
+    authPage.addEventListener('click', (e) => { if (e.target === authPage) authPage.classList.remove('show'); });
+
+    // 授权页交互：选头像 / 填昵称 / 保存回填
+    const avatarPick = document.getElementById('avatarPick');
+    const nickInput = document.getElementById('nickInput');
+    const authSave = document.getElementById('authSave');
+    const heroAvatar = document.getElementById('heroAvatar');
+    const heroName = document.getElementById('heroName');
+    let picked = false;
+
+    const AVATARS = ['🏃','💪','🥗','⚡','🌱'];
+    let ai = 0;
+    avatarPick.addEventListener('click', () => {
+      picked = true;
+      ai = (ai + 1) % AVATARS.length;
+      avatarPick.textContent = AVATARS[ai];
+      avatarPick.style.background = 'linear-gradient(135deg,#22bd85,#0d9a63)';
+      avatarPick.style.color = '#fff';
+      avatarPick.parentElement.querySelector('.auth-tip').textContent = '点击可更换';
+      refresh();
+    });
+    nickInput.addEventListener('input', refresh);
+    function refresh() {
+      const ok = nickInput.value.trim() && picked;
+      authSave.classList.toggle('disabled', !ok);
+    }
+    authSave.addEventListener('click', () => {
+      if (authSave.classList.contains('disabled')) return;
+      heroAvatar.textContent = AVATARS[ai];
+      heroName.textContent = nickInput.value.trim();
+      authPage.classList.remove('show');
+    });
+  </script>
+</body>
+</html>

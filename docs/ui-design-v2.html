@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>减肥记录小程序 · UI 设计方案 v2 · 活力青绿 / 治愈自然</title>
+<style>
+  /* ============ 页面骨架 ============ */
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
+    background:#eef2ef;
+    color:#163c2f;
+    -webkit-font-smoothing:antialiased;
+    padding:40px 20px 80px;
+  }
+  .wrap { max-width:1240px; margin:0 auto; }
+  .muted { color:#8da698; }
+  .small { font-size:12px; }
+  .row { display:flex; align-items:center; }
+  .grow { flex:1; }
+
+  /* ============ 头部 ============ */
+  .cover {
+    background:linear-gradient(140deg,#14b97e 0%,#0da267 55%,#0b8f59 100%);
+    border-radius:28px;
+    color:#fff;
+    padding:48px 52px;
+    position:relative;
+    overflow:hidden;
+    margin-bottom:36px;
+  }
+  .cover::after{
+    content:"";position:absolute;right:-90px;top:-110px;width:340px;height:340px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.18) 0%,rgba(255,255,255,0) 70%);
+  }
+  .cover .tagline{font-size:14px;letter-spacing:4px;opacity:.85;font-weight:500;}
+  .cover h1{font-size:40px;font-weight:600;margin:14px 0 10px;letter-spacing:1px;}
+  .cover p{font-size:15px;opacity:.9;line-height:1.8;max-width:760px;}
+  .cover .chips{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap;}
+  .cover .chip{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);
+    padding:6px 16px;border-radius:999px;font-size:12px;}
+
+  /* ============ 章节 ============ */
+  h2.sec {
+    font-size:22px;font-weight:600;margin:44px 0 18px;display:flex;align-items:center;gap:12px;
+  }
+  h2.sec .no{
+    width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#22bd85,#0d9a63);
+    color:#fff;font-size:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .grid{display:grid;gap:14px;}
+
+  /* 卡片 */
+  .card{background:#fff;border-radius:20px;padding:22px;box-shadow:0 6px 20px rgba(20,94,62,.05);}
+  .card h3{font-size:15px;font-weight:600;margin-bottom:12px;}
+
+  /* 色卡 */
+  .palette{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+  .swatch{border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 4px 14px rgba(20,94,62,.07);}
+  .swatch .color{height:64px;}
+  .swatch .meta{padding:10px 12px;}
+  .swatch .name{font-size:13px;font-weight:500;}
+  .swatch .hex{font-size:11px;color:#8da698;margin-top:2px;}
+
+  /* ============ 手机框 ============ */
+  .phones{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:26px;margin-top:8px;}
+  .shot{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .shot-label{font-size:15px;font-weight:600;color:#163c2f;}
+  .shot-note{font-size:11.5px;color:#8da698;line-height:1.6;text-align:center;max-width:280px;}
+  .shot .why{font-size:11px;color:#0b7a50;background:#e2f5ea;border-radius:10px;padding:6px 12px;line-height:1.5;max-width:280px;}
+
+  .phone{
+    width:300px;height:640px;background:#f2f7f3;border-radius:36px;overflow:hidden;
+    box-shadow:0 18px 44px rgba(16,60,40,.22), inset 0 0 0 8px #10201833;
+    position:relative;display:flex;flex-direction:column;flex-shrink:0;
+  }
+  .status{height:34px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 22px 4px;font-size:11px;font-weight:600;color:#163c2f;}
+  .nav{height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:600;color:#163c2f;background:#f2f7f3;}
+  .screen{flex:1;overflow:hidden;position:relative;background:#f2f7f3;}
+
+  /* ---------- 首页手机 ---------- */
+  .p-index .hero{background:linear-gradient(160deg,#14b97e,#0da267 55%,#0b8f59);padding:10px 14px 0;position:relative;}
+  .p-index .hero .greet .t{font-size:21px;font-weight:600;color:#fff;display:block;}
+  .p-index .hero .greet .subrow{display:flex;align-items:center;justify-content:space-between;margin-top:5px;}
+  .p-index .hero .greet .chip{font-size:10px;color:rgba(255,255,255,.92);background:rgba(255,255,255,.18);
+    border:1px solid rgba(255,255,255,.3);padding:4px 10px;border-radius:999px;margin-left:10px;flex-shrink:0;}
+  .p-index .hero .greet .sl2{font-size:10.5px;color:rgba(255,255,255,.78);}
+  .p-index .wcard{background:#fff;border-radius:16px;padding:12px 14px;margin:12px 0 0;}
+  .p-index .wcard .row1{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .p-index .wcard .lab{font-size:12px;font-weight:600;}
+  .p-index .pill{font-size:9px;color:#0b7a50;background:#e2f5ea;padding:3px 9px;border-radius:999px;}
+  .p-index .pill.amber{color:#a86a10;background:#fcf0da;}
+  .p-index .wnum{font-size:34px;font-weight:700;line-height:1;}
+  .p-index .wunit{font-size:11px;color:#8da698;margin-left:3px;}
+  .p-index .side{text-align:right;}
+  .p-index .side .sl{font-size:9px;color:#8da698;display:block;}
+  .p-index .side .sn{font-size:16px;font-weight:600;color:#d9962f;}
+  .p-index .bar{height:5px;background:#e6efea;border-radius:4px;margin-top:12px;overflow:hidden;}
+  .p-index .bar i{display:block;height:100%;width:26%;background:linear-gradient(90deg,#22bd85,#0d9a63);}
+  .p-index .bends{display:flex;justify-content:space-between;font-size:8.5px;color:#8da698;margin-top:4px;}
+
+  .p-index .dummy-h { height:8px; }
+  .p-index .card{background:#fff;border-radius:16px;margin:10px 12px 0;padding:12px 13px;box-shadow:0 4px 12px rgba(20,94,62,.05);}
+  .p-index .card .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .p-index .card .ht{display:flex;align-items:center;font-size:13px;font-weight:600;}
+  .p-index .card .dot{width:6px;height:6px;border-radius:50%;margin-right:7px;}
+  .d-green{background:#0e9e68;} .d-amber{background:#d9962f;} .d-blue{background:#4e9fe0;}
+  .p-index .ringrow{display:flex;align-items:center;}
+  .p-index .ring{width:82px;height:82px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .p-index .ring i{width:62px;height:62px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(20,94,62,.1);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .p-index .ring i b{font-size:15px;font-weight:700;color:#163c2f;}
+  .p-index .ring i span{font-size:8px;color:#8da698;margin-top:1px;}
+  .p-index .rinfo{flex:1;margin-left:14px;}
+  .p-index .ri{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;color:#5b7467;margin-bottom:7px;}
+  .p-index .ri b{font-weight:600;color:#163c2f;}
+  .p-index .kdot{width:7px;height:7px;border-radius:50%;margin-right:6px;}
+  .p-index .macrorow{display:flex;margin-top:11px;padding-top:10px;border-top:1px solid #e4ede6;}
+  .p-index .macro{flex:1;text-align:center;}
+  .p-index .macro b{display:block;font-size:13px;font-weight:600;}
+  .p-index .macro span{font-size:9px;color:#8da698;}
+  .p-index .task{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid #f0f4f1;font-size:11.5px;color:#5b7467;}
+  .p-index .task:last-child{border-bottom:none;}
+  .p-index .check{width:17px;height:17px;border-radius:50%;border:1.5px solid #c9d8cf;margin-right:9px;flex-shrink:0;}
+  .p-index .task.go .check{background:linear-gradient(135deg,#22bd85,#0d9a63);border-color:transparent;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;}
+  .p-index .go-btn{margin-left:auto;font-size:9.5px;color:#0b7a50;background:#e2f5ea;padding:4px 10px;border-radius:999px;flex-shrink:0;}
+  .p-index .task.go .go-btn{display:none;}
+  .p-index .week{display:flex;justify-content:space-between;padding:0 6px;}
+  .p-index .wd{text-align:center;}
+  .p-index .wd b{display:block;font-size:9.5px;color:#8da698;margin-bottom:5px;font-weight:400;}
+  .p-index .wd .bd{width:19px;height:19px;border-radius:7px;background:#edf3ef;margin:0 auto;}
+  .p-index .wd.on b{color:#0b7a50;font-weight:600;}
+  .p-index .wd.on .bd{background:linear-gradient(135deg,#22bd85,#0d9a63);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;}
+  .p-index .sum{font-size:9.5px;color:#5b7467;margin-top:11px;padding-top:9px;border-top:1px solid #f0f4f1;}
+  .p-index .sum b{color:#0b7a50;}
+  .p-index .dis{font-size:8.5px;color:#b6c7bd;text-align:center;margin:10px 20px 0;line-height:1.6;}
+
+  /* ---------- 记录页 ---------- */
+  .p-record .seg{display:flex;margin:10px 12px 0;background:#fff;border-radius:999px;padding:4px;box-shadow:0 4px 12px rgba(20,94,62,.05);}
+  .p-record .seg span{flex:1;text-align:center;font-size:12px;padding:8px 0;border-radius:999px;color:#8da698;}
+  .p-record .seg span.on{background:linear-gradient(135deg,#22bd85,#0d9a63);color:#fff;font-weight:600;}
+  .p-record .datebar{display:flex;align-items:center;justify-content:center;padding:10px 0 2px;}
+  .p-record .datebar .arr{width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(20,94,62,.08);
+    display:flex;align-items:center;justify-content:center;font-size:16px;color:#0b7a50;}
+  .p-record .datebar .dt{text-align:center;min-width:120px;}
+  .p-record .datebar .dt b{display:block;font-size:13px;font-weight:600;color:#163c2f;}
+  .p-record .datebar .dt span{font-size:9px;color:#8da698;}
+  .p-record .rcard{background:#fff;border-radius:16px;margin:10px 12px 0;padding:12px 13px;box-shadow:0 4px 12px rgba(20,94,62,.05);}
+  .p-record .rhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .p-record .rhead .ht{display:flex;align-items:center;font-size:13px;font-weight:600;}
+  .p-record .meals{display:flex;gap:6px;margin-bottom:10px;}
+  .p-record .meals span{flex:1;text-align:center;padding:7px 0;border-radius:10px;background:#f1f6f3;font-size:10px;color:#5b7467;}
+  .p-record .meals span.on{background:#fff;box-shadow:inset 0 0 0 1.5px #0e9e68;color:#0b7a50;font-weight:600;}
+  .p-record .mode{display:flex;background:#edf3ef;border-radius:999px;padding:3px;margin-bottom:10px;}
+  .p-record .mode span{flex:1;text-align:center;padding:7px 0;border-radius:999px;font-size:10.5px;color:#8da698;}
+  .p-record .mode span.on{background:#fff;color:#0b7a50;font-weight:600;box-shadow:0 3px 8px rgba(20,94,62,.08);}
+  .p-record .fld{margin-bottom:9px;}
+  .p-record .fld label{display:block;font-size:9.5px;color:#5b7467;font-weight:500;margin-bottom:5px;}
+  .p-record .inp{height:32px;background:#f1f6f3;border:1px solid #e3ece6;border-radius:10px;padding:0 10px;font-size:11px;color:#b6c7bd;display:flex;align-items:center;}
+  .p-record .big-btn{height:40px;border-radius:999px;background:linear-gradient(135deg,#22bd85,#0d9a63);color:#fff;font-size:13px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px rgba(14,158,104,.24);margin-top:6px;}
+  .p-record .tip{font-size:9px;color:#b6c7bd;margin:-2px 0 8px;display:block;}
+  .p-record .li{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #f0f4f1;font-size:11px;color:#163c2f;}
+  .p-record .li:last-child{border-bottom:none;}
+  .p-record .mtag{font-size:8.5px;color:#fff;background:linear-gradient(135deg,#22bd85,#0d9a63);border-radius:999px;padding:3px 8px;margin-right:8px;flex-shrink:0;}
+  .p-record .mtag.m2{background:linear-gradient(135deg,#5da9e6,#3d83c4);}
+  .p-record .kcal{margin-left:auto;font-size:10px;color:#8da698;flex-shrink:0;margin-right:6px;}
+  .p-record .kcal b{color:#0b7a50;font-weight:600;}
+  .p-record .del{font-size:10px;color:#b6c7bd;}
+
+  /* ---------- 趋势页 ---------- */
+  .p-trend .seg{display:flex;margin:10px 12px 0;background:#fff;border-radius:999px;padding:4px;box-shadow:0 4px 12px rgba(20,94,62,.05);}
+  .p-trend .seg span{flex:1;text-align:center;font-size:12px;padding:8px 0;border-radius:999px;color:#8da698;}
+  .p-trend .seg span.on{background:linear-gradient(135deg,#22bd85,#0d9a63);color:#fff;font-weight:600;}
+  .p-trend .tcard{background:#fff;border-radius:16px;margin:10px 12px 0;padding:12px 13px;box-shadow:0 4px 12px rgba(20,94,62,.05);}
+  .p-trend .legend{display:flex;gap:12px;font-size:8.5px;color:#8da698;}
+  .p-trend .legend i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:4px;vertical-align:middle;}
+  .p-trend .chart{border-radius:8px;background:linear-gradient(#fff,#fff);
+    height:120px;position:relative;margin-top:6px;overflow:hidden;}
+  .p-trend .chart .g{position:absolute;left:0;right:0;border-top:1px dashed #e4ede6;}
+  .p-trend svg{position:absolute;inset:0;}
+  .p-trend .axis{display:flex;justify-content:space-between;font-size:8.5px;color:#b6c7bd;padding-top:4px;}
+  .p-trend .metrics{display:flex;margin-top:10px;padding-top:9px;border-top:1px solid #e4ede6;}
+  .p-trend .metrics>div{flex:1;text-align:center;}
+  .p-trend .metrics>div+div{border-left:1px solid #e4ede6;}
+  .p-trend .metrics b{display:block;font-size:14px;font-weight:700;}
+  .p-trend .metrics .down{color:#0b7a50;}
+  .p-trend .metrics span{font-size:8.5px;color:#8da698;}
+  .p-trend .score{display:flex;align-items:center;margin:4px 0 10px;}
+  .p-trend .sr{width:64px;height:64px;border-radius:50%;background:conic-gradient(#0e9e68 0 100%);display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 14px rgba(14,158,104,.22);flex-shrink:0;}
+  .p-trend .sr i{width:50px;height:50px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:20px;font-weight:700;color:#0b7a50;font-style:normal;}
+  .p-trend .stage{margin-left:14px;}
+  .p-trend .stage b{display:block;font-size:13px;}
+  .p-trend .stage span{font-size:9px;color:#8da698;}
+  .p-trend .list .item{font-size:10.5px;line-height:1.6;padding:7px 10px;border-radius:9px;margin-bottom:6px;}
+  .p-trend .list .risk{background:#fdeae6;color:#a23c33;}
+  .p-trend .list .tip{background:#e2f5ea;color:#0b6e49;}
+
+  /* ---------- 我的页 ---------- */
+  .p-profile .phead{background:linear-gradient(135deg,#eafaf1,#f6fcf8);border:1px solid #d4ecdf;border-radius:16px;
+    margin:10px 12px 0;padding:12px 13px;display:flex;align-items:center;}
+  .p-profile .av{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#22bd85,#0d9a63);
+    color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;flex-shrink:0;}
+  .p-profile .av.girl{background:linear-gradient(135deg,#5da9e6,#3d83c4);}
+  .p-profile .pinfo{flex:1;margin-left:10px;}
+  .p-profile .pinfo b{display:block;font-size:13px;font-weight:600;}
+  .p-profile .pinfo span{font-size:9px;color:#8da698;}
+  .p-profile .done{font-size:8.5px;color:#0b7a50;background:#e2f5ea;padding:3px 8px;border-radius:999px;}
+  .p-profile .pcard{background:#fff;border-radius:16px;margin:10px 12px 0;padding:12px 13px;box-shadow:0 4px 12px rgba(20,94,62,.05);}
+  .p-profile .seg{display:flex;background:#edf3ef;border-radius:999px;padding:3px;}
+  .p-profile .seg span{flex:1;text-align:center;padding:7px 0;border-radius:999px;font-size:11px;color:#8da698;}
+  .p-profile .seg span.on{background:#fff;color:#0b7a50;font-weight:600;box-shadow:0 3px 8px rgba(20,94,62,.08);}
+  .p-profile .goalflow{display:flex;align-items:center;justify-content:space-around;margin-top:6px;}
+  .p-profile .gcir{width:44px;height:44px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .p-profile .gcir b{font-size:14px;font-weight:700;line-height:1;}
+  .p-profile .gcir span{font-size:7px;color:#8da698;margin-top:3px;}
+  .p-profile .gcir.from{background:#fcf0da;border:2px solid #f6e3bd;}
+  .p-profile .gcir.to{background:#e2f5ea;border:2px solid #c9ecd9;}
+  .p-profile .gflow{font-size:16px;color:#0e9e68;}
+  .p-profile .plan3{display:flex;align-items:center;margin-top:4px;}
+  .p-profile .plan3>div{flex:1;text-align:center;}
+  .p-profile .plan3 b{display:block;font-size:14px;font-weight:700;}
+  .p-profile .plan3 span{font-size:8px;color:#8da698;}
+  .p-profile .plan3 .hl{background:#e2f5ea;border-radius:9px;padding:8px 4px;}
+  .p-profile .plan3 .hl b{color:#0b7a50;}
+  .p-profile .menu{margin-top:4px;}
+  .p-profile .mi{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #f0f4f1;font-size:11px;color:#163c2f;}
+  .p-profile .mi:last-child{border-bottom:none;}
+  .p-profile .mi .ic{width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;margin-right:9px;}
+  .p-profile .mi .sub{font-size:8.5px;color:#b6c7bd;display:block;margin-top:1px;}
+  .p-profile .mi.on .sub{color:#0b7a50;}
+  .p-profile .sw{width:32px;height:18px;border-radius:999px;background:linear-gradient(135deg,#22bd85,#0d9a63);padding:2px;margin-left:auto;}
+  .p-profile .sw i{display:block;width:14px;height:14px;border-radius:50%;background:#fff;margin-left:auto;}
+  .p-profile .mi .arr{color:#b6c7bd;font-size:15px;margin-left:6px;}
+
+  /* ---------- 目标设置 / 自定义食物 ---------- */
+  .p-sub .tcard{background:#fff;border-radius:16px;margin:14px 12px;padding:13px;box-shadow:0 4px 12px rgba(20,94,62,.05);}
+  .p-sub .two{display:flex;gap:8px;}
+  .p-sub .two>div{flex:1;}
+  .p-sub .slider{margin:14px 0 4px;}
+  .p-sub .track{height:4px;border-radius:4px;background:#e4ede6;position:relative;}
+  .p-sub .track i{position:absolute;left:0;top:0;bottom:0;width:50%;background:linear-gradient(90deg,#22bd85,#0d9a63);border-radius:4px;}
+  .p-sub .knob{position:absolute;left:calc(50% - 9px);top:-7px;width:18px;height:18px;border-radius:50%;background:#fff;
+    box-shadow:0 2px 6px rgba(20,94,62,.3);}
+  .p-sub .hint3{display:flex;justify-content:space-between;font-size:8px;color:#b6c7bd;margin-top:6px;}
+  .p-sub .macro3{display:flex;gap:8px;margin-bottom:10px;}
+  .p-sub .macro3>div{flex:1;background:#f5f9f6;border-radius:10px;padding:8px;}
+  .p-sub .macro3 .dot{width:6px;height:6px;border-radius:50%;margin-bottom:6px;}
+  .p-sub .macro3 .dot.p{background:#0e9e68;}
+  .p-sub .macro3 .dot.c{background:#d9962f;}
+  .p-sub .macro3 .dot.f{background:#4e9fe0;}
+  .p-sub .macro3 span{display:block;font-size:8px;color:#8da698;margin-bottom:6px;}
+  .p-sub .macro3 .mini{height:24px;background:#fff;border:1px solid #e3ece6;border-radius:7px;font-size:10px;color:#b6c7bd;
+    display:flex;align-items:center;padding:0 7px;}
+  .p-sub .note{display:flex;font-size:9px;color:#8da698;background:#f5f9f6;border-radius:10px;padding:9px 11px;line-height:1.7;margin-top:12px;}
+  .p-sub .inp{height:36px;background:#f1f6f3;border:1px solid #e3ece6;border-radius:10px;padding:0 10px;font-size:11px;color:#b6c7bd;
+    display:flex;align-items:center;margin-bottom:9px;}
+
+  /* ============ 原理区 ============ */
+  .principles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;}
+  .principle{border:1px solid #e4ede6;border-left:4px solid #0e9e68;}
+  .principle h3{font-size:14px;font-weight:600;margin-bottom:6px;}
+  .principle p{font-size:12.5px;color:#5b7467;line-height:1.8;}
+
+  /* 规范说明表 */
+  .spec{width:100%;border-collapse:collapse;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 14px rgba(20,94,62,.05);}
+  .spec th,.spec td{padding:12px 16px;text-align:left;font-size:13px;border-bottom:1px solid #eef2ef;}
+  .spec th{background:#f6faf7;font-weight:600;color:#163c2f;font-size:12.5px;}
+  .spec td{color:#4d6b5a;}
+  .spec td b{color:#163c2f;}
+  .spec code{background:#edf3ef;color:#0b7a50;border-radius:6px;padding:1px 7px;font-size:12px;}
+  .files{background:#0f3323;border-radius:16px;padding:22px 24px;color:#bfe6d2;font-size:13px;line-height:2;margin-top:8px;}
+  .files code{background:rgba(255,255,255,.08);padding:2px 8px;border-radius:6px;}
+  .foot{text-align:center;color:#8da698;font-size:12px;margin-top:50px;}
+  h2.sec{margin-top:56px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ 封面 ============ -->
+  <div class="cover">
+    <div class="tagline">UI DESIGN SPEC · V2.0</div>
+    <h1>活力青绿 · 治愈自然</h1>
+    <p>一套为「减肥记录小程序」重新打造的界面语言:分层翡翠绿 × 暖白渐变底 × 大圆角卡片 × 渐变主操作。
+      在保留微信生态用户习惯的前提下,让「记录」更轻、让「数据」更暖、让「坚持」更有仪式感。</p>
+    <div class="chips">
+      <span class="chip">今日 · 记录 · 趋势 · 我的</span>
+      <span class="chip">6 个页面全量重构</span>
+      <span class="chip">uni-app Vue3 · SCSS Tokens</span>
+      <span class="chip">微信小程序原生渲染</span>
+    </div>
+  </div>
+
+  <!-- ============ 1 设计原则 ============ -->
+  <h2 class="sec"><span class="no">1</span>设计原则 —— 为什么这样设计</h2>
+  <div class="principles">
+    <div class="card principle">
+      <h3>一屏看懂「今天」</h3>
+      <p>首页把「当前体重、热量余量、今日任务」压缩成一眼可读的信息层级:渐变 Hero 承载仪式感,白色卡片承载数据密度,避免用户为找一个小数点而翻屏。</p>
+    </div>
+    <div class="card principle">
+      <h3>拇指触达优先</h3>
+      <p>主操作(保存体重 / 记录一餐 / 记录运动)统一为通栏渐变大按钮,落在拇指自然区;日期切换、餐次选择、Tab 切换都放大到 ≥88rpx 的易点区域。</p>
+    </div>
+    <div class="card principle">
+      <h3>颜色只表达「意义」</h3>
+      <p>绿=达标/健康(摄入、打卡、已达成),琥珀=提醒/未完成,红=超标/体重上升,蓝=消耗/数据。颜色承载语义而非装饰,色盲友好(均配文字/图形辅助)。</p>
+    </div>
+    <div class="card principle">
+      <h3>温和但有记忆点</h3>
+      <p>克制使用渐变(按钮、打卡、Hero),几何图形仅出现在头部圆斑与分类圆点,避免「AI 味」过度装饰;字号层级 22/26/30/52rpx 节奏统一。</p>
+    </div>
+  </div>
+
+  <!-- ============ 2 色彩系统 ============ -->
+  <h2 class="sec"><span class="no">2</span>色彩系统 · Design Tokens</h2>
+  <div class="palette">
+    <div class="swatch"><div class="color" style="background:#0b7a50"></div><div class="meta"><div class="name">品牌深 · brand-deep</div><div class="hex">#0B7A50 · 强调文字/按压</div></div></div>
+    <div class="swatch"><div class="color" style="background:#0e9e68"></div><div class="meta"><div class="name">品牌主 · brand</div><div class="hex">#0E9E68 · 主操作/达标</div></div></div>
+    <div class="swatch"><div class="color" style="background:linear-gradient(135deg,#22bd85,#0d9a63)"></div><div class="meta"><div class="name">品牌渐变 · grad-brand</div><div class="hex">#22BD85→#0D9A63</div></div></div>
+    <div class="swatch"><div class="color" style="background:#e2f5ea"></div><div class="meta"><div class="name">浅绿底 · brand-tint</div><div class="hex">#E2F5EA · 选中/标签</div></div></div>
+    <div class="swatch"><div class="color" style="background:#d9962f"></div><div class="meta"><div class="name">提醒 · amber</div><div class="hex">#D9962F</div></div></div>
+    <div class="swatch"><div class="color" style="background:#fcf0da"></div><div class="meta"><div class="name">琥珀底 · amber-tint</div><div class="hex">#FCF0DA</div></div></div>
+    <div class="swatch"><div class="color" style="background:#e85447"></div><div class="meta"><div class="name">超标/升 · red</div><div class="hex">#E85447</div></div></div>
+    <div class="swatch"><div class="color" style="background:#fdeae6"></div><div class="meta"><div class="name">浅红底 · red-tint</div><div class="hex">#FDEAE6</div></div></div>
+    <div class="swatch"><div class="color" style="background:#4e9fe0"></div><div class="meta"><div class="name">消耗 · blue</div><div class="hex">#4E9FE0 · 运动/数据</div></div></div>
+    <div class="swatch"><div class="color" style="background:#e8f3fc"></div><div class="meta"><div class="name">浅蓝底 · blue-tint</div><div class="hex">#E8F3FC</div></div></div>
+    <div class="swatch"><div class="color" style="background:#f2f7f3"></div><div class="meta"><div class="name">页面底 · bg</div><div class="hex">#F2F7F3 · 暖白</div></div></div>
+    <div class="swatch"><div class="color" style="background:#163c2f"></div><div class="meta"><div class="name">主文字 · ink</div><div class="hex">#163C2F</div></div></div>
+    <div class="swatch"><div class="color" style="background:#5b7467"></div><div class="meta"><div class="name">正文 · ink-2</div><div class="hex">#5B7467</div></div></div>
+    <div class="swatch"><div class="color" style="background:#8da698"></div><div class="meta"><div class="name">次要 · ink-3</div><div class="hex">#8DA698</div></div></div>
+    <div class="swatch"><div class="color" style="background:#e4ede6"></div><div class="meta"><div class="name">分隔线 · line</div><div class="hex">#E4EDE6</div></div></div>
+  </div>
+  <p class="small muted" style="margin-top:12px">相比旧版(#10B981 薄荷绿 / 灰底 #F7F9F8):新版改用「深一档 + 渐变」的翡翠绿系表达健康,页面底色改为暖白带青,文字统一为墨绿黑,去除了高饱和浅灰的冷感。</p>
+
+  <!-- ============ 3 页面高保真 ============ -->
+  <h2 class="sec"><span class="no">3</span>六屏高保真设计</h2>
+
+  <div class="phones">
+
+    <!-- 1 首页 -->
+    <div class="shot">
+      <div class="phone p-index">
+        <div class="screen">
+          <div class="hero">
+            <div class="greet">
+              <span class="t">早上好</span>
+              <div class="subrow"><span class="sl2">记录每一天,看见更好的自己</span><span class="chip">今天</span></div>
+            </div>
+            <div class="wcard">
+              <div class="row1">
+                <span class="row" style="gap:8px"><span class="lab">当前体重</span><span class="pill">BMI 25.6 · 超重</span></span>
+              </div>
+              <div class="row" style="justify-content:space-between;align-items:flex-end">
+                <span><span class="wnum">78.5</span><span class="wunit">kg</span></span>
+                <span class="side"><span class="sl">距目标</span><span class="sn">8.5 kg</span></span>
+              </div>
+              <div class="bar"><i></i></div>
+              <div class="bends"><span>80.0 kg 起</span><span>目标 70.0 kg</span></div>
+            </div>
+          </div>
+          <div class="dummy-h"></div>
+          <div class="card">
+            <div class="head"><span class="ht"><span class="dot d-green"></span>今日热量</span><span class="pill amber">1 条未计热量</span></div>
+            <div class="ringrow">
+              <div class="ring" style="background:conic-gradient(#0e9e68 0 82%,#e6efea 82%)">
+                <i><b>350</b><span>还可摄入</span></i>
+              </div>
+              <div class="rinfo">
+                <div class="ri"><span class="row"><span class="kdot" style="background:#0e9e68"></span>摄入</span><b>1450 kcal</b></div>
+                <div class="ri"><span class="row"><span class="kdot" style="background:#4e9fe0"></span>消耗</span><b>230 kcal</b></div>
+                <div class="ri"><span class="row"><span class="kdot" style="background:#cdd9d1"></span>预算</span><b>1800 kcal</b></div>
+              </div>
+            </div>
+            <div class="macrorow">
+              <div class="macro"><b style="color:#0b7a50">58g</b><span>蛋白质</span></div>
+              <div class="macro"><b style="color:#a86a10">166g</b><span>碳水</span></div>
+              <div class="macro"><b style="color:#2c6ea8">46g</b><span>脂肪</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="head"><span class="ht"><span class="dot d-amber"></span>今日任务</span><span class="muted" style="font-size:9px">1/3 已完成</span></div>
+            <div class="task go"><span class="check">✓</span>记录今天的体重</div>
+            <div class="task"><span class="check"></span>记录今天吃了什么<span class="go-btn">去记录</span></div>
+            <div class="task"><span class="check"></span>动一动,记录运动<span class="go-btn">去记录</span></div>
+          </div>
+          <div class="card">
+            <div class="head"><span class="ht"><span class="dot d-blue"></span>本周打卡</span></div>
+            <div class="week">
+              <div class="wd on"><b>日</b><div class="bd">✓</div></div>
+              <div class="wd on"><b>一</b><div class="bd">✓</div></div>
+              <div class="wd on"><b>二</b><div class="bd">✓</div></div>
+              <div class="wd"><b>三</b><div class="bd"></div></div>
+              <div class="wd on"><b>四</b><div class="bd">✓</div></div>
+              <div class="wd"><b>五</b><div class="bd"></div></div>
+              <div class="wd"><b>六</b><div class="bd"></div></div>
+            </div>
+            <div class="sum">近 7 天记录了 <b>4</b> 天,体重变化 <b>-0.42 kg/周</b></div>
+          </div>
+          <div class="dis">本工具仅用于个人数据记录,食物热量为估算值,不构成医疗建议</div>
+        </div>
+      </div>
+      <div class="shot-label">1 · 今天(沉浸式首页)</div>
+      <div class="shot-note">自定义导航 + 渐变 Hero + 悬浮体重卡;热量环、任务、周打卡三张白卡承载数据。</div>
+      <div class="why">符合用户习惯:首页即「总览仪表盘」,今日可执行任务放中间,遵循微信下拉即看的高频路径。</div>
+    </div>
+
+    <!-- 2 记录 · 饮食 -->
+    <div class="shot">
+      <div class="phone p-record">
+        <div class="status"><span>9:41</span><span>●●●</span></div>
+        <div class="nav">记录</div>
+        <div class="screen">
+          <div class="seg"><span>体重</span><span class="on">饮食</span><span>运动</span></div>
+          <div class="datebar">
+            <span class="arr">‹</span>
+            <div class="dt"><b>今天</b><span>9月3日 周四</span></div>
+            <span class="arr" style="opacity:.35">›</span>
+          </div>
+          <div class="rcard">
+            <div class="rhead"><span class="ht"><span class="dot d-amber"></span>记录饮食</span></div>
+            <div class="meals"><span>早</span><span class="on">午</span><span>晚</span><span>加</span></div>
+            <div class="mode"><span>⚡ 快速记录</span><span class="on">🔍 查食物库</span></div>
+            <div class="fld"><label>搜索食物</label><div class="inp">名称或拼音首字母,如 jxr</div></div>
+            <div class="li"><span class="mtag">午</span>鸡胸肉沙拉<span class="kcal">145千卡/100g</span></div>
+            <div class="li"><span class="mtag m2">午</span>糙米饭<span class="kcal">112千卡/100g</span></div>
+            <div class="fld" style="margin-top:9px"><label>份量(份 · 每份 150g)</label>
+              <div class="row"><div class="inp" style="width:70px;margin-right:8px">1</div><span class="muted" style="font-size:11px">= <b style="color:#0b7a50">218 千卡</b></span></div>
+            </div>
+            <div class="big-btn">记录这一餐</div>
+          </div>
+          <div class="rcard">
+            <div class="rhead"><span class="ht"><span class="dot d-amber"></span>今天吃了</span><span class="muted" style="font-size:9px">2 条</span></div>
+            <div class="li"><span class="mtag">早</span>豆浆 鸡蛋<span class="kcal">260 千卡</span><span class="del">删除</span></div>
+            <div class="li"><span class="mtag">午</span>鸡胸肉沙拉 + 糙米饭<span class="kcal">450 千卡</span><span class="del">删除</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="shot-label">2 · 记录(饮食通道)</div>
+      <div class="shot-note">胶囊 Tab、餐次大芯片、快速/查库双模式;搜索即选即算热量,保存为通栏主按钮。</div>
+      <div class="why">符合用户习惯:餐次默认「午餐」、日期默认「今天」,零配置即可完成一次记录;删除放右侧远离拇指主操作。</div>
+    </div>
+
+    <!-- 3 趋势 -->
+    <div class="shot">
+      <div class="phone p-trend">
+        <div class="status"><span>9:41</span><span>●●●</span></div>
+        <div class="nav">趋势</div>
+        <div class="screen">
+          <div class="seg"><span>7 天</span><span class="on">30 天</span><span>90 天</span></div>
+          <div class="tcard">
+            <div class="head" style="display:flex;justify-content:space-between;align-items:center">
+              <span class="ht" style="display:flex;align-items:center;font-size:13px;font-weight:600">
+                <span class="dot d-green" style="width:6px;height:6px;border-radius:50%;background:#0e9e68;margin-right:7px"></span>体重趋势
+              </span>
+              <span class="legend"><span><i style="background:#c3d3ca"></i>实测</span><span><i style="background:#0e9e68"></i>7日均线</span></span>
+            </div>
+            <div class="chart">
+              <div class="g" style="top:0"></div><div class="g" style="top:33%"></div><div class="g" style="top:66%"></div>
+              <svg viewBox="0 0 250 120" preserveAspectRatio="none">
+                <polyline points="0,30 35,34 70,28 105,40 140,36 175,48 210,46 250,56" fill="none" stroke="#c3d3ca" stroke-width="2.5" stroke-linecap="round"/>
+                <polyline points="0,26 35,30 70,26 105,34 140,32 175,40 210,40 250,46" fill="none" stroke="#0e9e68" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="axis"><span>08-05</span><span>09-03</span></div>
+            <div class="metrics">
+              <div><b class="down">-1.2</b><span>区间变化 kg</span></div>
+              <div><b class="down">-0.28</b><span>周均变化 kg</span></div>
+              <div><b>14</b><span>记录天数</span></div>
+            </div>
+          </div>
+          <div class="tcard">
+            <div class="head" style="display:flex;justify-content:space-between;align-items:center">
+              <span class="ht" style="display:flex;align-items:center;font-size:13px;font-weight:600">
+                <span class="dot d-amber" style="width:6px;height:6px;border-radius:50%;background:#d9962f;margin-right:7px"></span>阶段分析
+              </span>
+              <span class="small muted">本地规则</span>
+            </div>
+            <div class="score">
+              <div class="sr"><i>86</i></div>
+              <div class="stage"><b>稳定减脂期</b><span>节奏合理,请保持</span></div>
+            </div>
+            <div class="list">
+              <div class="item risk">· 昨日碳水摄入偏高,建议晚餐减少主食</div>
+              <div class="item tip">· 近 7 天平均每周 -0.42kg,处于健康区间</div>
+              <div class="item tip">· 保持每天 30 分钟快走,可再提高 120 千卡消耗</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="shot-label">3 · 趋势(30 天)</div>
+      <div class="shot-note">权重数字卡片 + 评分环 + 分级提示;实测/均线双线图表,红绿语义用于体重变化方向。</div>
+      <div class="why">符合用户习惯:涨红跌绿符合直觉预期;评分环让"是否做得好"无需读表即可感知。</div>
+    </div>
+
+    <!-- 4 我的 -->
+    <div class="shot">
+      <div class="phone p-profile">
+        <div class="status"><span>9:41</span><span>●●●</span></div>
+        <div class="nav">我的</div>
+        <div class="screen">
+          <div class="phead">
+            <div class="av">他</div>
+            <div class="pinfo"><b>我的健康档案</b><span>完善资料,热量预算更准确</span></div>
+            <span class="done">✓ 已完善</span>
+          </div>
+          <div class="pcard">
+            <div class="head" style="display:flex;align-items:center;font-size:13px;font-weight:600;margin-bottom:10px">
+              <span class="dot d-green" style="width:6px;height:6px;border-radius:50%;background:#0e9e68;margin-right:7px"></span>减重目标
+            </div>
+            <div class="goalflow">
+              <div class="gcir from"><b>80.0</b><span>起始 kg</span></div>
+              <span class="gflow">→</span>
+              <div class="gcir to"><b>70.0</b><span>目标 kg</span></div>
+            </div>
+          </div>
+          <div class="pcard">
+            <div class="head" style="display:flex;align-items:center;font-size:13px;font-weight:600;margin-bottom:10px">
+              <span class="dot d-blue" style="width:6px;height:6px;border-radius:50%;background:#4e9fe0;margin-right:7px"></span>我的热量测算
+            </div>
+            <div class="plan3">
+              <div><b>1668</b><span>基础代谢 BMR</span></div>
+              <div><b>2040</b><span>每日总消耗 TDEE</span></div>
+              <div class="hl"><b>1800</b><span>建议摄入</span></div>
+            </div>
+          </div>
+          <div class="pcard">
+            <div class="menu">
+              <div class="mi on">
+                <span class="ic" style="background:#fcf0da">🔔</span>
+                <div style="flex:1"><span>每日体重打卡提醒</span><span class="sub">已开启 · 每天 21:00</span></div>
+                <span class="sw"><i></i></span>
+              </div>
+              <div class="mi">
+                <span class="ic" style="background:#e2f5ea">🍱</span>
+                <div style="flex:1"><span>管理自定义食物</span></div>
+                <span class="arr">›</span>
+              </div>
+              <div class="mi">
+                <span class="ic" style="background:#e8f3fc">📊</span>
+                <div style="flex:1"><span>导出我的数据(CSV)</span></div>
+                <span class="arr">›</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="shot-label">4 · 我的</div>
+      <div class="shot-note">档案卡 + 目标环形展示 + BMR/TDEE 测算 + 彩图标菜单 + iOS 风开关。</div>
+      <div class="why">符合用户习惯:高频(资料/目标)在上,低频(导出/提醒)在下;设置入口全部带状态摘要,减少"点进去才知道"。</div>
+    </div>
+
+    <!-- 5 目标设置 -->
+    <div class="shot">
+      <div class="phone p-sub">
+        <div class="status"><span>9:41</span><span>●</span></div>
+        <div class="nav" style="position:relative">‹&nbsp; 目标设置</div>
+        <div class="screen" style="background:#f2f7f3">
+          <div class="tcard">
+            <div class="head" style="display:flex;align-items:center;font-size:14px;font-weight:600;margin-bottom:12px">
+              <span class="dot d-green" style="width:6px;height:6px;border-radius:50%;background:#0e9e68;margin-right:8px"></span>设置减重目标
+            </div>
+            <div class="two">
+              <div><div class="small muted" style="margin-bottom:6px;font-size:10px">起始体重 kg</div><div class="inp">80.0</div></div>
+              <div><div class="small muted" style="margin-bottom:6px;font-size:10px">目标体重 kg</div><div class="inp">70.0</div></div>
+            </div>
+            <div style="margin:6px 0 16px"><div class="small muted" style="margin-bottom:6px;font-size:10px">目标日期(选填)</div><div class="inp">2026-12-31 ›</div></div>
+            <div class="row" style="justify-content:space-between">
+              <span class="small muted" style="font-size:10px">每日热量缺口</span>
+              <span style="font-size:17px;font-weight:700;color:#0b7a50">500 <span class="small muted" style="font-weight:400">千卡</span></span>
+            </div>
+            <div class="slider"><div class="track"><i></i><div class="knob"></div></div></div>
+            <div class="hint3"><span>0 · 维持</span><span>500 ≈ 每周减 0.5kg</span><span>1000 · 激进</span></div>
+            <div class="big-btn" style="height:44px;border-radius:999px;background:linear-gradient(135deg,#22bd85,#0d9a63);color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:18px;box-shadow:0 8px 16px rgba(14,158,104,.24)">保存目标</div>
+          </div>
+        </div>
+      </div>
+      <div class="shot-label">5 · 目标设置</div>
+      <div class="shot-note">起始/目标并排、缺口滑杆带节奏参考(0 维持 / 500 健康 / 1000 激进),保存为渐变主按钮。</div>
+      <div class="why">符合用户习惯:滑杆即时显示数值 + 三段参考文案,把"每日缺口"这个专业概念翻译成可感知的节奏。</div>
+    </div>
+
+    <!-- 6 自定义食物 -->
+    <div class="shot">
+      <div class="phone p-sub">
+        <div class="status"><span>9:41</span><span>●</span></div>
+        <div class="nav" style="position:relative">‹&nbsp; 自定义食物</div>
+        <div class="screen" style="background:#f2f7f3">
+          <div class="tcard">
+            <div class="head" style="display:flex;align-items:center;font-size:14px;font-weight:600;margin-bottom:4px">
+              <span class="dot d-amber" style="width:6px;height:6px;border-radius:50%;background:#d9962f;margin-right:8px"></span>新增自定义食物
+            </div>
+            <div class="small muted" style="font-size:9.5px;margin-bottom:12px">记录食物库里没有的菜,数值按每 100g 填</div>
+            <div class="small muted" style="margin-bottom:6px;font-size:10px">名称</div><div class="inp">例如 妈妈做的红烧排骨</div>
+            <div class="two" style="margin-top:4px">
+              <div><div class="small muted" style="margin-bottom:6px;font-size:10px">热量 千卡/100g</div><div class="inp">186</div></div>
+              <div><div class="small muted" style="margin-bottom:6px;font-size:10px">每份克重 g</div><div class="inp">100</div></div>
+            </div>
+            <div class="small muted" style="font-size:10px;margin:8px 0 8px">三大营养素(选填)</div>
+            <div class="macro3">
+              <div><span class="dot p"></span><span>蛋白质</span><div class="mini">18</div></div>
+              <div><span class="dot c"></span><span>碳水</span><div class="mini">9</div></div>
+              <div><span class="dot f"></span><span>脂肪</span><div class="mini">10</div></div>
+            </div>
+            <div class="small muted" style="margin-bottom:6px;font-size:10px">份量单位</div><div class="inp">份</div>
+            <div class="big-btn" style="height:44px;border-radius:999px;background:linear-gradient(135deg,#22bd85,#0d9a63);color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:16px;box-shadow:0 8px 16px rgba(14,158,104,.24)">保存</div>
+            <div class="note"><span>💡&nbsp;</span>只填热量也能用,营养素留空也能记录</div>
+          </div>
+        </div>
+      </div>
+      <div class="shot-label">6 · 自定义食物</div>
+      <div class="shot-note">营养素带色点输入格(蛋白绿/碳水琥珀/脂肪蓝),与「今天」页宏量卡同色系呼应。</div>
+      <div class="why">符合用户习惯:关键字段按 100g 基线,留空兜底,「保存」后即回列表刷新,路径最短。</div>
+    </div>
+
+  </div>
+
+  <!-- ============ 4 文字与结构 ============ -->
+  <h2 class="sec"><span class="no">4</span>字号 / 圆角 / 间距规范</h2>
+  <table class="spec">
+    <tr><th style="width:200px">Token</th><th>数值</th><th>用途示例</th></tr>
+    <tr><td>超大数字</td><td><b>88rpx / 700</b></td><td>首页当前体重、热量环余量</td></tr>
+    <tr><td>页面大标题</td><td><b>52rpx / 600</b></td><td>首页问候语(白色、渐变底上)</td></tr>
+    <tr><td>卡片标题</td><td><b>32rpx / 600</b></td><td>今日热量 / 减重目标 / 阶段分析</td></tr>
+    <tr><td>正文</td><td><b>28rpx / 400</b></td><td>记录行、任务文字、说明</td></tr>
+    <tr><td>次要</td><td><b>22–24rpx</b></td><td>标签、单位、日期、菜单副文案</td></tr>
+    <tr><td>页脚</td><td><b>20rpx</b></td><td>免责声明</td></tr>
+    <tr><td>卡片圆角</td><td><code>--r-lg: 32rpx</code></td><td>所有主卡片(白卡 / 信息卡)</td></tr>
+    <tr><td>圆角中/小</td><td><code>--r-md 24rpx · --r-sm 18rpx</code></td><td>输入框、列表项、提示块</td></tr>
+    <tr><td>胶囊圆角</td><td><b>999rpx</b></td><td>Tab、分段、按钮、chip、switch</td></tr>
+    <tr><td>卡片投影</td><td><code>0 10rpx 30rpx rgba(20,94,62,.06)</code></td><td>白卡悬浮层次(极轻,避免脏)</td></tr>
+    <tr><td>主按钮投影</td><td><code>0 12rpx 24rpx rgba(14,158,104,.24)</code></td><td>渐变主按钮的"可点"提亮</td></tr>
+    <tr><td>页面左右边距</td><td><b>24rpx</b></td><td>统一栅格</td></tr>
+    <tr><td>触达目标</td><td><b>≥ 88rpx 高</b></td><td>按钮、Tab、餐次选择、箭头</td></tr>
+  </table>
+
+  <!-- ============ 5 文件 ============ -->
+  <h2 class="sec"><span class="no">5</span>本次代码改动清单</h2>
+  <div class="files">
+    全局设计令牌 · <code>src/App.vue</code>(16 个 CSS 变量:色彩/圆角/投影,改一处全局换肤)<br>
+    导航与 TabBar · <code>src/pages.json</code>(页面底色、TabBar 选中色 #0E9E68;首页沉浸式自定义导航;TabBar 现已带原生图标)<br>
+    TabBar 图标素材 · <code>src/static/tabbar/</code>(4 枚线性图标 × 灰/绿两态,81×81 PNG,微信原生规范)<br>
+    图标生成脚本 · <code>scripts/gen_tabbar_icons.py</code>(Lucide 图标库经 Iconify 取 SVG 后由 sharp 栅格化,改色或换图标直接重跑)<br>
+    首页 · <code>src/pages/index/index.vue</code>(渐变 Hero、悬浮体重卡、任务计数、周打卡徽章、BMI 分级色)<br>
+    记录 · <code>src/pages/record/record.vue</code>(胶囊 Tab、餐次彩色徽章、双模式、热量即算卡)<br>
+    趋势 · <code>src/pages/trend/trend.vue</code> + <code>components/trend-chart/trend-chart.vue</code>(卡片化指标、评分环、图表色同步)<br>
+    我的 · <code>src/pages/profile/profile.vue</code>(档案卡、目标圆环、测算高亮、开关/菜单)<br>
+    目标设置 · <code>src/pages/profile/goal.vue</code>(并排输入、滑杆三档提示)<br>
+    自定义食物 · <code>src/pages/record/food-custom.vue</code>(营养素色点输入格)<br>
+    微信授权 · <code>src/pages/profile/wx-auth.vue</code> + <code>server/auth.py 上传接口</code> + <code>store/user.js 资料 getters</code>(chooseAvatar 微信头像 + nickname 昵称,上传至 /uploads/avatars)<br>
+    <span style="opacity:.6">验证:`npm run build:mp-weixin` 与 `build:h5` 均编译通过,TabBar 图标已复制到 dist/build/mp-weixin/static/tabbar/。</span>
+  </div>
+
+    <div class="foot">Fit-App · UI Design Spec v2.0 · 活力青绿 / 治愈自然 · Generated with ❤</div>
+  </div>
+</body>
+</html>

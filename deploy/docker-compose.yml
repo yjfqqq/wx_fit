@@ -1,0 +1,59 @@
+# 减肥小程序线上部署：MySQL + 后端 + Caddy（自动 HTTPS）
+# 用法见同目录 DEPLOY.md；环境变量从同目录 .env 读取
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: fit-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-fit_app}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  server:
+    build: ../server
+    container_name: fit-server
+    restart: unless-stopped
+    environment:
+      DEBUG: "false"
+      DB_ENGINE: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-fit_app}
+      JWT_SECRET: ${JWT_SECRET}
+      WX_APPID: ${WX_APPID}
+      WX_SECRET: ${WX_SECRET}
+      WX_MOCK_LOGIN: "false"
+      WX_TEMPLATE_ID: ${WX_TEMPLATE_ID:-}
+      WX_REMIND_HOUR: ${WX_REMIND_HOUR:-21}
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: fit-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - server
+
+volumes:
+  mysql-data:
+  caddy-data:
+  caddy-config:
