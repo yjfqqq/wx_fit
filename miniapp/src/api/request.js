@@ -4,7 +4,7 @@
  * - 401 时清掉本地 token 并重新走登录
  * - 统一错误提示
  */
-import { BASE_URL } from "../config";
+import { BASE_URL, CLOUD_ENV_ID, CLOUD_SERVICE } from "../config";
 
 let refreshing = false;
 
@@ -74,26 +74,29 @@ function request(method, url, data = {}, _retry = true) {
 
 export async function doLogin() {
   return new Promise((resolve, reject) => {
-    uni.login({
-      provider: "weixin",
-      success: async (loginRes) => {
-        try {
-          const res = await new Promise((ok, no) => {
-            uni.request({
-              url: BASE_URL + "/auth/login",
-              method: "POST",
-              data: { code: loginRes.code || "mock" },
-              header: { "Content-Type": "application/json" },
-              success: (r) =>
-                r.statusCode < 300 ? ok(r.data) : no(new Error("登录接口异常")),
-              fail: no,
-            });
-          });
-          setToken(res.token);
-          resolve(res);
-        } catch (e) {
-          reject(e);
+    if (typeof wx === "undefined" || !wx.cloud) {
+      reject(new Error("当前微信基础库不支持云托管调用"));
+      return;
+    }
+
+    wx.cloud.callContainer({
+      config: { env: CLOUD_ENV_ID },
+      path: "/api/v1/auth/login",
+      method: "POST",
+      header: {
+        "X-WX-SERVICE": CLOUD_SERVICE,
+        "Content-Type": "application/json",
+      },
+      // 后端模型仍要求 code 字段；云托管登录实际使用网关注入的 x-wx-openid。
+      data: { code: "cloudrun" },
+      success: (res) => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          setToken(res.data.token);
+          resolve(res.data);
+          return;
         }
+        const detail = res.data && (res.data.detail || res.data.message);
+        reject(new Error(detail || `登录接口异常（HTTP ${res.statusCode}）`));
       },
       fail: reject,
     });

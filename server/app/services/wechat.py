@@ -28,9 +28,16 @@ async def code2session(code: str) -> str:
         "js_code": code,
         "grant_type": "authorization_code",
     }
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.get(CODE2SESSION_URL, params=params)
-        data = resp.json()
+    try:
+        # 云托管环境可能注入 HTTPS 代理并替换证书；忽略代理变量，仍保留 HTTPS 证书校验。
+        async with httpx.AsyncClient(timeout=10, trust_env=False) as client:
+            resp = await client.get(CODE2SESSION_URL, params=params)
+            data = resp.json()
+    except httpx.HTTPError as e:
+        # 连接不上微信服务器（DNS/超时/无公网出口等），转成业务错误避免 500
+        raise WeChatLoginError(
+            f"无法连接微信服务器（{e.__class__.__name__}），请检查部署环境的公网出口配置"
+        )
 
     errcode = data.get("errcode")
     if errcode:

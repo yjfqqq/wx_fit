@@ -86,6 +86,7 @@ import { ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { foodApi } from "@/api";
 import { useUserStore } from "@/store/user";
+import { applyTheme } from "@/utils/theme";
 
 const user = useUserStore();
 const list = ref([]);
@@ -140,12 +141,15 @@ async function load() {
   }
 }
 
-onShow(load);
+onShow(() => {
+  load();
+  applyTheme();
+});
 </script>
 
 <style scoped lang="scss">
 .page {
-  padding: 24rpx 0 60rpx;
+  padding: 24rpx 0 64rpx;
   background: var(--bg);
   min-height: 100vh;
 }
@@ -170,7 +174,7 @@ onShow(load);
   width: 14rpx;
   height: 14rpx;
   border-radius: 50%;
-  margin-right: 14rpx;
+  margin-right: 12rpx;
   &.c-amber {
     background: var(--amber);
   }
@@ -187,14 +191,14 @@ onShow(load);
   display: block;
   font-size: 22rpx;
   color: var(--ink-3);
-  margin: 8rpx 0 28rpx;
+  margin: 8rpx 0 24rpx;
 }
 .count-tag {
   font-size: 22rpx;
   color: var(--brand-deep);
   background: var(--brand-tint);
-  padding: 6rpx 18rpx;
-  border-radius: 999rpx;
+  padding: 6rpx 16rpx;
+  border-radius: var(--r-pill);
 }
 
 .field {
@@ -218,8 +222,8 @@ onShow(load);
 .input {
   height: 88rpx;
   width: 100%;
-  background: #f1f6f3;
-  border: 1rpx solid #e3ece6;
+  background: var(--surface-2);
+  border: 1rpx solid var(--line);
   border-radius: var(--r-md);
   padding: 0 24rpx;
   font-size: 30rpx;
@@ -238,25 +242,25 @@ onShow(load);
   }
   .macro-tip {
     font-size: 20rpx;
-    color: var(--ink-4);
+    color: var(--ink-3);
   }
 }
 .macro-row {
   display: flex;
   gap: 16rpx;
-  margin-bottom: 26rpx;
+  margin-bottom: 24rpx;
 }
 .macro-item {
   flex: 1;
   position: relative;
-  background: #f5f9f6;
+  background: var(--surface-2);
   border-radius: var(--r-md);
-  padding: 18rpx 16rpx 14rpx;
+  padding: 16rpx 16rpx 12rpx;
   .macro-dot {
     width: 12rpx;
     height: 12rpx;
     border-radius: 50%;
-    margin-bottom: 10rpx;
+    margin-bottom: 8rpx;
     &.p {
       background: var(--brand);
     }
@@ -271,7 +275,7 @@ onShow(load);
     display: block;
     font-size: 20rpx;
     color: var(--ink-3);
-    margin-bottom: 10rpx;
+    margin-bottom: 8rpx;
   }
 }
 .input.mini {
@@ -280,23 +284,23 @@ onShow(load);
   font-size: 28rpx;
   font-weight: 500;
   padding-right: 40rpx;
-  background: #fff;
+  background: var(--card);
 }
 .macro-unit {
   position: absolute;
   right: 24rpx;
-  bottom: 30rpx;
+  bottom: 32rpx;
   font-size: 20rpx;
-  color: var(--ink-4);
+  color: var(--ink-3);
   pointer-events: none;
 }
 
 .btn {
   width: 100%;
   height: 100rpx;
-  border-radius: 999rpx;
+  border-radius: var(--r-pill);
   background: var(--grad-brand);
-  color: #fff;
+  color: var(--on-brand);
   font-size: 32rpx;
   font-weight: 600;
   display: flex;
@@ -312,7 +316,7 @@ button.btn {
   display: block;
   text-align: center;
   font-size: 22rpx;
-  color: var(--ink-4);
+  color: var(--ink-3);
   margin-top: 20rpx;
 }
 
@@ -350,7 +354,7 @@ button.btn {
 .fsub {
   display: block;
   font-size: 20rpx;
-  color: var(--ink-4);
+  color: var(--ink-3);
   margin-top: 6rpx;
 }
 .del {

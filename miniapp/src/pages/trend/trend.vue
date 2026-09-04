@@ -1,16 +1,20 @@
 <template>
   <view class="page">
-    <!-- 范围切换 -->
-    <view class="range-tabs">
-      <view
-        v-for="r in ranges"
-        :key="r"
-        class="range"
-        :class="{ on: days === r }"
-        @click="switchRange(r)"
-      >
-        <text class="range-num">{{ r }}</text>
-        <text class="range-unit">天</text>
+    <!-- 范围切换（紧凑药丸，不再独占一行的大卡片） -->
+    <view class="range-row">
+      <view class="rangepill" role="tablist" aria-label="体重趋势时间范围">
+        <view
+          v-for="r in ranges"
+          :key="r"
+          class="rangepill-item hit"
+          :class="{ on: days === r }"
+          role="tab"
+          :aria-selected="days === r"
+          @click="switchRange(r)"
+        >
+          <text class="num">{{ r }}</text>
+          <text class="rp-unit">天</text>
+        </view>
       </view>
     </view>
 
@@ -21,10 +25,7 @@
           <text class="head-dot c-green" />
           <text class="card-title">体重趋势</text>
         </view>
-        <view class="legend">
-          <view class="lg"><text class="lg-line raw" /><text class="lg-txt">实测</text></view>
-          <view class="lg"><text class="lg-line avg" /><text class="lg-txt">7日均线</text></view>
-        </view>
+        <text class="p-meta">近 {{ days }} 天</text>
       </view>
 
       <view class="canvas-wrap" v-if="points.length >= 2">
@@ -33,11 +34,13 @@
           type="2d"
           class="trend-canvas"
           :style="{ height: '230px' }"
+          role="img"
+          :aria-label="'体重趋势折线图，展示近 ' + days + ' 天体重变化'"
           @touchend="onTouchEnd"
         />
         <view class="axis">
-          <text>{{ firstDate }}</text>
-          <text>{{ lastDate }}</text>
+          <text class="num">{{ firstDate }}</text>
+          <text class="num">{{ lastDate }}</text>
         </view>
       </view>
 
@@ -47,17 +50,23 @@
         <text class="empty-sub">连续记录 3 天以上,这里就能看出趋势了</text>
       </view>
 
+      <!-- 图例移到图表下方：375px 宽下标题 + 两个图例必然挤压 -->
+      <view class="legend below">
+        <view class="lg"><text class="lg-line raw" /><text class="lg-txt">实测</text></view>
+        <view class="lg"><text class="lg-line avg" /><text class="lg-txt">7日均线</text></view>
+      </view>
+
       <view class="metrics" v-if="points.length">
         <view class="metric">
-          <text class="mv" :class="changeClass">{{ changeText }}</text>
+          <text class="mv num" :class="changeClass">{{ changeText }}</text>
           <text class="ml">区间变化 kg</text>
         </view>
         <view class="metric">
-          <text class="mv">{{ rateText }}</text>
+          <text class="mv num">{{ rateText }}</text>
           <text class="ml">周均变化 kg</text>
         </view>
         <view class="metric">
-          <text class="mv">{{ points.length }}</text>
+          <text class="mv num">{{ points.length }}</text>
           <text class="ml">记录天数</text>
         </view>
       </view>
@@ -70,18 +79,36 @@
           <text class="head-dot c-amber" />
           <text class="card-title">热量收支</text>
         </view>
-        <view class="legend right">
-          <view class="lg"><text class="lg-line bar-in" /><text class="lg-txt">摄入</text></view>
-          <view class="lg"><text class="lg-line bar-out" /><text class="lg-txt">消耗</text></view>
-        </view>
+        <text class="p-meta">近 {{ days }} 天</text>
       </view>
-      <view class="bars">
-        <view class="bar-col" v-for="c in calories" :key="c.date">
-          <view class="bar-stack">
-            <view class="bar-in" :style="{ height: barHeight(c.intake) + 'rpx' }" />
-            <view class="bar-out" :style="{ height: barHeight(c.burn) + 'rpx' }" />
+
+      <view class="bars-wrap">
+        <view class="bars-axis">
+          <text class="by num">{{ maxCal }}</text>
+          <text class="by num">0</text>
+        </view>
+        <view class="bars-inner">
+          <view
+            class="budget-line"
+            v-if="budgetBottomPct !== null"
+            :style="{ bottom: budgetBottomPct + '%' }"
+          >
+            <text class="bl-val num">预算 {{ budget }}</text>
+          </view>
+          <view class="bars">
+            <view class="bar-col" v-for="c in calories" :key="c.date">
+              <view class="bar-stack">
+                <view class="bar-in" :style="{ height: barHeight(c.intake) + 'rpx' }" />
+                <view class="bar-out" :style="{ height: barHeight(c.burn) + 'rpx' }" />
+              </view>
+            </view>
           </view>
         </view>
+      </view>
+      <view class="legend below">
+        <view class="lg"><text class="lg-line bar-in" /><text class="lg-txt">摄入</text></view>
+        <view class="lg"><text class="lg-line bar-out" /><text class="lg-txt">消耗</text></view>
+        <view class="lg" v-if="budget"><text class="lg-line bl" /><text class="lg-txt">预算</text></view>
       </view>
     </view>
 
@@ -132,9 +159,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, getCurrentInstance, watch } from "vue";
+import { ref, computed, getCurrentInstance, watch, nextTick } from "vue";
+import { onShow } from "@dcloudio/uni-app";
 import { statsApi } from "@/api";
 import { useUserStore } from "@/store/user";
+import { today } from "@/utils/date";
+import { applyTheme, theme } from "@/utils/theme";
 import uCharts from "@qiun/ucharts";
 
 const user = useUserStore();
@@ -169,12 +199,27 @@ const rateText = computed(() => {
   return (Number(r) > 0 ? "+" : "") + Number(r).toFixed(2);
 });
 
-const maxCal = computed(() =>
-  Math.max(100, ...calories.value.map((c) => Math.max(c.intake, c.burn)))
-);
+const maxCal = computed(() => {
+  // 用所有天 intake/burn 的最大值做基准；若全 0 给一个保底 800 让柱子有合理高度
+  const vals = calories.value.flatMap((c) => [Number(c?.intake) || 0, Number(c?.burn) || 0]);
+  const m = vals.length ? Math.max(...vals) : 0;
+  return m > 0 ? m : 800;
+});
+// v >= 0 时按比例算高度，最小给 6rpx 让有数据的柱子可见；v == 0 时直接给 0（避免全是底部细线）
 function barHeight(v) {
-  return Math.round((v / maxCal.value) * 120);
+  const n = Number(v) || 0;
+  if (n <= 0) return 0;
+  return Math.max(6, Math.round((n / maxCal.value) * 120));
 }
+
+// 每日热量预算：用于柱状图上的虚线基线，没有设预算时不画
+const budget = ref(null);
+const budgetBottomPct = computed(() => {
+  if (!budget.value) return null;
+  const p = (Number(budget.value) / maxCal.value) * 100;
+  if (!Number.isFinite(p) || p <= 0 || p >= 100) return null;
+  return p;
+});
 
 function switchRange(r) {
   days.value = r;
@@ -224,6 +269,16 @@ function computeRange() {
 
 function buildOpts() {
   const { min, max } = computeRange();
+  // 主题感知：深色模式下把图表字面量配色切到暗色板（canvas 不支持 CSS 变量）
+  const dark = theme.value === "dark";
+  const c = {
+    bg: dark ? "#16211C" : "#FFFFFF",
+    axis: dark ? "#87998F" : "#5A7568",
+    line: dark ? "#26352E" : "#E1E8E4",
+    brand: dark ? "#4ECB8B" : "#06794C",
+    ink: dark ? "#E8EFEA" : "#0F2419",
+    track: dark ? "#34453C" : "#CBD6CF",
+  };
   return {
     type: "line",
     context: ctx,
@@ -233,26 +288,26 @@ function buildOpts() {
     categories: chartCats.value,
     series: chartSeries.value.map((s) => ({ name: s.name, data: s.data })),
     animation: true,
-    background: "#FFFFFF",
-    color: ["#c3d3ca", "#0E9E68"],
+    background: c.bg,
+    color: [c.track, c.brand],
     padding: [14, 14, 4, 2],
     legend: { show: false },
     xAxis: {
       disableGrid: true,
       labelCount: 4,
       fontSize: 10,
-      fontColor: "#8da698",
-      axisLineColor: "#e4ede6",
+      fontColor: c.axis,
+      axisLineColor: c.line,
     },
     yAxis: {
       gridType: "dash",
       dashLength: 4,
-      gridColor: "#e4ede6",
+      gridColor: c.line,
       splitNumber: 4,
       min,
       max,
       fontSize: 10,
-      fontColor: "#8da698",
+      fontColor: c.axis,
       format: (v) => Number(v).toFixed(1),
     },
     extra: {
@@ -261,9 +316,9 @@ function buildOpts() {
         showArrow: false,
         border: true,
         borderWidth: 1,
-        borderColor: "#0E9E68",
-        bgColor: "#ffffff",
-        fontColor: "#163c2f",
+        borderColor: c.brand,
+        bgColor: c.bg,
+        fontColor: c.ink,
       },
     },
   };
@@ -325,24 +380,34 @@ function onTouchEnd(e) {
 async function load() {
   try {
     await user.ensureLogin();
-    const [w, c, a] = await Promise.all([
+    const [w, c, a, s] = await Promise.all([
       statsApi.weight(days.value),
       statsApi.calories(days.value),
       statsApi.analysis(days.value),
+      statsApi.summary(today()),
     ]);
     points.value = w?.points || [];
     calories.value = c || [];
     analysis.value = a;
+    budget.value = s?.budget_kcal != null ? Number(s.budget_kcal) : null;
   } catch (e) {
     console.error(e);
   }
 }
 
-onMounted(() => {
+onShow(() => {
   load();
+  applyTheme();
 });
 
-watch(() => [points.value], render);
+watch(() => [points.value], () => {
+  nextTick(render);
+});
+
+// 主题切换时重绘图表（canvas 用字面量配色，需主动重建）
+watch(theme, () => {
+  if (chart) render();
+});
 
 defineExpose({ load });
 </script>
@@ -352,95 +417,103 @@ defineExpose({ load });
   padding: 24rpx 0 40rpx;
 }
 
-/* 范围切换 */
-.range-tabs {
+/* 范围切换（紧凑药丸，靠 ::after 把热区补到 88rpx） */
+.range-row {
   display: flex;
-  margin: 0 24rpx;
-  background: #fff;
-  border-radius: 999rpx;
-  padding: 10rpx;
-  box-shadow: var(--shadow-card);
+  justify-content: flex-end;
+  padding: 8rpx var(--pad-x) 0;
 }
-.range {
-  flex: 1;
+.rangepill {
   display: flex;
-  align-items: baseline;
+  background: var(--surface-2);
+  border-radius: var(--r-pill);
+  padding: 6rpx;
+}
+.rangepill-item {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 18rpx 0;
-  border-radius: 999rpx;
+  min-height: 60rpx;
+  padding: 0 24rpx;
+  border-radius: var(--r-pill);
   color: var(--ink-3);
-  transition: all 0.25s;
+  position: relative;
+  transition: all var(--d-fast) var(--e-out);
+  &::after { content: ""; position: absolute; inset: -12rpx 0; }
   &.on {
-    background: var(--grad-brand);
-    box-shadow: var(--shadow-btn);
+    background: var(--card);
+    box-shadow: var(--shadow-card);
   }
-  .range-num {
-    font-size: 32rpx;
-    font-weight: 600;
+  .num {
+    font-size: 28rpx;
+    line-height: 1;
   }
-  .range-unit {
+  .rp-unit {
     font-size: 20rpx;
+    line-height: 1;
     margin-left: 4rpx;
   }
-  &.on .range-num,
-  &.on .range-unit {
-    color: #fff;
+  &.on text {
+    color: var(--brand);
+    font-weight: 700;
   }
 }
 
 /* 卡片 */
 .card {
   background: var(--card);
+  border: 1rpx solid var(--line);
   border-radius: var(--r-lg);
-  padding: 30rpx 32rpx;
-  margin: 24rpx 24rpx 0;
+  padding: var(--pad-card);
+  margin: var(--gap-card) var(--pad-x) 0;
   box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
 .card-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 26rpx;
+  margin-bottom: 24rpx;
 }
 .head-l {
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 .head-dot {
-  width: 14rpx;
-  height: 14rpx;
+  width: 12rpx;
+  height: 12rpx;
   border-radius: 50%;
-  margin-right: 14rpx;
-  &.c-green {
-    background: var(--brand);
-  }
-  &.c-amber {
-    background: var(--amber);
-  }
-  &.c-blue {
-    background: var(--blue);
-  }
+  margin-right: 16rpx;
+  flex-shrink: 0;
+  &.c-green { background: var(--brand); }
+  &.c-amber { background: var(--amber-fill); }
+  &.c-blue  { background: var(--blue-fill); }
 }
 .card-title {
   font-size: 32rpx;
   font-weight: 600;
   color: var(--ink);
+  letter-spacing: -0.4rpx;
+}
+.p-meta {
+  font-size: 21rpx;
+  color: var(--ink-3);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 .legend {
   display: flex;
-  &.right {
-    .lg {
-      margin-left: 0;
-      margin-right: 20rpx;
-      &:last-child {
-        margin-right: 0;
-      }
-    }
+  justify-content: center;
+  gap: 32rpx;
+  &.below {
+    margin-top: 20rpx;
+    padding-top: 20rpx;
+    border-top: 1rpx solid var(--line);
   }
   .lg {
     display: flex;
     align-items: center;
-    margin-left: 20rpx;
   }
   .lg-txt {
     font-size: 20rpx;
@@ -453,13 +526,18 @@ defineExpose({ load });
   height: 6rpx;
   border-radius: 3rpx;
   &.raw {
-    background: #c3d3ca;
+    background: var(--line-strong);
   }
   &.avg {
     background: var(--grad-brand);
   }
+  &.bl {
+    background: repeating-linear-gradient(90deg, var(--ink-3) 0 6rpx, transparent 6rpx 12rpx);
+    height: 2rpx;
+    width: 30rpx;
+  }
   &.bar-in {
-    background: var(--amber);
+    background: var(--brand);
     width: 18rpx;
   }
   &.bar-out {
@@ -480,11 +558,11 @@ defineExpose({ load });
   display: flex;
   justify-content: space-between;
   font-size: 20rpx;
-  color: var(--ink-4);
+  color: var(--ink-3);
   padding: 8rpx 12rpx 0;
 }
 .empty {
-  padding: 60rpx 0 40rpx;
+  padding: 64rpx 0 40rpx;
   text-align: center;
   .empty-ico {
     font-size: 64rpx;
@@ -499,16 +577,16 @@ defineExpose({ load });
   .empty-sub {
     display: block;
     font-size: 22rpx;
-    color: var(--ink-4);
-    margin-top: 10rpx;
+    color: var(--ink-3);
+    margin-top: 8rpx;
   }
 }
 
 /* 指标 */
 .metrics {
   display: flex;
-  margin-top: 28rpx;
-  padding-top: 26rpx;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
   border-top: 1rpx solid var(--line);
 }
 .metric {
@@ -537,18 +615,65 @@ defineExpose({ load });
   }
 }
 
-/* 热量柱状 */
+/* 热量柱状：加了 y 轴刻度与预算虚线基线，否则读不出绝对值 */
+.bars-wrap {
+  display: flex;
+  gap: 12rpx;
+}
+.bars-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 180rpx;
+  flex-shrink: 0;
+  .by {
+    font-size: 18rpx;
+    color: var(--ink-3);
+    line-height: 1;
+    transform: translateY(-4rpx);
+    &:last-child { transform: translateY(4rpx); }
+  }
+}
+.bars-inner {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+.budget-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 2rpx dashed var(--amber-fill);
+  z-index: 2;
+  .bl-val {
+    position: absolute;
+    right: 0;
+    top: -32rpx;
+    font-size: 18rpx;
+    font-weight: 700;
+    color: var(--amber);
+    background: var(--card);
+    padding: 0 6rpx;
+    line-height: 1.4;
+  }
+}
 .bars {
   display: flex;
   align-items: flex-end;
-  height: 150rpx;
-  gap: 6rpx;
-  padding: 0 4rpx;
+  height: 180rpx;
+  gap: 4rpx;
+  padding: 8rpx 4rpx 12rpx;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .bar-col {
   flex: 1;
   display: flex;
   justify-content: center;
+  height: 100%;
+  align-items: flex-end;
+  min-width: 0;
 }
 .bar-stack {
   display: flex;
@@ -556,34 +681,33 @@ defineExpose({ load });
   gap: 4rpx;
   width: 100%;
   justify-content: center;
+  height: 100%;
 }
 .bar-in {
   width: 12rpx;
-  background: linear-gradient(180deg, #f0b25c, #e5942c);
+  background: var(--brand);
   border-radius: 6rpx 6rpx 0 0;
-  min-height: 2rpx;
-  transition: height 0.4s;
+  box-sizing: border-box;
 }
 .bar-out {
   width: 12rpx;
-  background: linear-gradient(180deg, #6cb1ee, #3d83c4);
+  background: var(--blue-fill);
   border-radius: 6rpx 6rpx 0 0;
-  min-height: 2rpx;
-  transition: height 0.4s;
+  box-sizing: border-box;
 }
 
 /* 阶段分析 */
 .source {
   font-size: 20rpx;
   color: var(--ink-3);
-  background: #f1f6f3;
+  background: var(--surface-2);
   padding: 8rpx 20rpx;
-  border-radius: 999rpx;
+  border-radius: var(--r-pill);
 }
 .score-row {
   display: flex;
   align-items: center;
-  margin-bottom: 10rpx;
+  margin-bottom: 8rpx;
 }
 .score-wrap {
   width: 240rpx;
@@ -600,13 +724,13 @@ defineExpose({ load });
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(14, 158, 104, 0.22);
+  box-shadow: var(--shadow-btn);
 }
 .score-inner {
   width: 132rpx;
   height: 132rpx;
   border-radius: 50%;
-  background: #fff;
+  background: var(--card);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -620,11 +744,11 @@ defineExpose({ load });
 .score-label {
   font-size: 22rpx;
   color: var(--ink-3);
-  margin-top: 14rpx;
+  margin-top: 12rpx;
 }
 .stage-box {
   flex: 1;
-  margin-left: 30rpx;
+  margin-left: 32rpx;
 }
 .stage-label {
   display: block;
@@ -639,7 +763,7 @@ defineExpose({ load });
   line-height: 1.6;
 }
 .block {
-  margin-top: 26rpx;
+  margin-top: 24rpx;
   padding-top: 24rpx;
   border-top: 1rpx solid var(--line);
 }
@@ -662,7 +786,7 @@ defineExpose({ load });
   margin-right: 12rpx;
   &.warn {
     background: var(--amber-tint);
-    color: #a86a10;
+    color: var(--amber);
     font-weight: 700;
   }
   &.good {
@@ -674,22 +798,22 @@ defineExpose({ load });
 .item {
   font-size: 26rpx;
   line-height: 1.7;
-  padding: 18rpx 24rpx;
+  padding: 16rpx 24rpx;
   border-radius: var(--r-sm);
   margin-bottom: 12rpx;
 }
 .risk {
   background: var(--red-tint);
-  color: #a23c33;
+  color: var(--red);
 }
 .tip {
   background: var(--brand-tint);
-  color: #0b6e49;
+  color: var(--brand);
 }
 .disclaimer {
   margin: 24rpx 32rpx 0;
   font-size: 20rpx;
-  color: var(--ink-4);
+  color: var(--ink-3);
   text-align: center;
 }
 </style>

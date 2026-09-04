@@ -1,12 +1,14 @@
 <template>
   <view class="page">
     <!-- ============ 分段切换 ============ -->
-    <view class="tabs">
+    <view class="tabs" role="tablist" aria-label="记录类型">
       <view
         v-for="(t, i) in tabs"
         :key="i"
         class="tab"
         :class="{ on: current === i }"
+        role="tab"
+        :aria-selected="current === i"
         @click="current = i"
       >
         <text>{{ t }}</text>
@@ -41,12 +43,13 @@
         <view class="field big">
           <text class="label">体重（kg）</text>
           <view class="input-wrap">
-            <input
-              class="input big-input"
-              type="digit"
-              v-model="weightForm.weight_kg"
-              placeholder="例如 65.5"
-            />
+          <input
+            class="input big-input"
+            type="digit"
+            inputmode="decimal"
+            v-model="weightForm.weight_kg"
+            placeholder="例如 65.5"
+          />
             <text class="unit-suffix" v-if="weightForm.weight_kg">kg</text>
           </view>
         </view>
@@ -332,6 +335,7 @@ import { onShow } from "@dcloudio/uni-app";
 import { foodApi, recordApi, statsApi } from "@/api";
 import { useUserStore } from "@/store/user";
 import { today, niceDate, addDays } from "@/utils/date";
+import { applyTheme } from "@/utils/theme";
 
 const user = useUserStore();
 const tabs = ["体重", "饮食", "运动"];
@@ -549,6 +553,7 @@ async function loadDay() {
 }
 
 onShow(() => {
+  applyTheme();
   const tab = uni.getStorageSync("record_tab");
   if (tab !== "") {
     current.value = Number(tab);
@@ -561,88 +566,93 @@ onShow(() => {
 
 <style scoped lang="scss">
 .page {
-  padding: 24rpx 0 60rpx;
+  padding: 24rpx 0 64rpx;
 }
 
-/* ============ 分段切换 ============ */
+/* ============ 分段切换（sticky 吸顶，为表单省高度） ============ */
 .tabs {
   display: flex;
-  margin: 0 24rpx;
-  background: #fff;
-  border-radius: 999rpx;
-  padding: 10rpx;
+  margin: 0 var(--pad-x);
+  background: var(--card);
+  border: 1rpx solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 8rpx;
   box-shadow: var(--shadow-card);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 .tab {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20rpx 0;
+  min-height: 76rpx;
   font-size: 30rpx;
   font-weight: 500;
   color: var(--ink-3);
-  border-radius: 999rpx;
-  transition: all 0.25s;
+  border-radius: var(--r-pill);
+  transition: all var(--d-base) var(--e-out);
   &.on {
     background: var(--grad-brand);
-    color: #fff;
+    color: var(--on-brand);
     font-weight: 600;
     box-shadow: var(--shadow-btn);
   }
 }
 
-/* ============ 日期条 ============ */
+/* ============ 日期条（压成单行，为表单让出高度） ============ */
 .date-bar {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 28rpx 24rpx 8rpx;
+  gap: 32rpx;
+  padding: 20rpx var(--pad-x) 4rpx;
 }
 .d-arrow {
   width: 72rpx;
   height: 72rpx;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: var(--shadow-card);
+  background: var(--card);
+  border: 1rpx solid var(--line);
   display: flex;
   align-items: center;
   justify-content: center;
-  &.dim {
-    opacity: 0.35;
-  }
+  &.dim { opacity: 0.35; }
 }
 .chev {
   font-size: 44rpx;
-  color: var(--brand-deep);
+  color: var(--brand);
   line-height: 1;
   padding-bottom: 6rpx;
 }
 .date-text {
-  min-width: 300rpx;
+  min-width: 320rpx;
   text-align: center;
-  padding: 0 30rpx;
   .d-main {
     display: block;
-    font-size: 34rpx;
-    font-weight: 600;
+    font-size: 32rpx;
+    font-weight: 650;
     color: var(--ink);
   }
   .d-sub {
     display: block;
-    font-size: 22rpx;
+    font-size: 21rpx;
     color: var(--ink-3);
     margin-top: 4rpx;
+    font-variant-numeric: tabular-nums;
   }
 }
 
 /* ============ 卡片 ============ */
 .card {
   background: var(--card);
+  border: 1rpx solid var(--line);
   border-radius: var(--r-lg);
-  padding: 30rpx 32rpx;
-  margin: 24rpx 24rpx 0;
+  padding: var(--pad-card);
+  margin: var(--gap-card) var(--pad-x) 0;
   box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
 .card-head {
   display: flex;
@@ -653,44 +663,41 @@ onShow(() => {
 .head-l {
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 .head-dot {
-  width: 14rpx;
-  height: 14rpx;
+  width: 12rpx;
+  height: 12rpx;
   border-radius: 50%;
-  margin-right: 14rpx;
-  &.c-green {
-    background: var(--brand);
-  }
-  &.c-amber {
-    background: var(--amber);
-  }
-  &.c-blue {
-    background: var(--blue);
-  }
+  margin-right: 16rpx;
+  flex-shrink: 0;
+  &.c-green { background: var(--brand); }
+  &.c-amber { background: var(--amber-fill); }
+  &.c-blue  { background: var(--blue-fill); }
 }
 .card-title {
   font-size: 32rpx;
   font-weight: 600;
   color: var(--ink);
+  letter-spacing: -0.4rpx;
 }
 .tip-inline {
   font-size: 22rpx;
-  color: var(--ink-4);
+  color: var(--ink-3);
 }
 .sum-tag {
   font-size: 22rpx;
   color: var(--brand-deep);
   background: var(--brand-tint);
-  padding: 6rpx 18rpx;
-  border-radius: 999rpx;
+  padding: 6rpx 16rpx;
+  border-radius: var(--r-pill);
 }
 
 /* ============ 表单 ============ */
 .field {
   margin-bottom: 24rpx;
   &.big {
-    margin-bottom: 28rpx;
+    margin-bottom: 24rpx;
   }
 }
 .field-row {
@@ -714,22 +721,27 @@ onShow(() => {
 .input {
   height: 92rpx;
   width: 100%;
-  background: #f1f6f3;
-  border: 1rpx solid #e3ece6;
+  background: var(--card);
+  border: 1rpx solid var(--line-strong);
   border-radius: var(--r-md);
-  padding: 0 26rpx;
+  padding: 0 24rpx;
   font-size: 30rpx;
   color: var(--ink);
   box-sizing: border-box;
+  transition: border-color var(--d-fast) var(--e-out);
+  &:focus { border-color: var(--brand); }
 }
+/* 大录入框：一屏唯一的视觉重心 */
 .big-input {
   height: 112rpx;
-  font-size: 52rpx;
-  font-weight: 600;
+  font-size: 48rpx;
+  font-weight: 700;
+  letter-spacing: -1rpx;
+  font-variant-numeric: tabular-nums;
 }
 .unit-suffix {
   position: absolute;
-  right: 28rpx;
+  right: 24rpx;
   top: 50%;
   transform: translateY(-50%);
   font-size: 28rpx;
@@ -744,9 +756,9 @@ onShow(() => {
 .btn {
   width: 100%;
   height: 100rpx;
-  border-radius: 999rpx;
+  border-radius: var(--r-pill);
   background: var(--grad-brand);
-  color: #fff;
+  color: var(--on-brand);
   font-size: 32rpx;
   font-weight: 600;
   display: flex;
@@ -762,7 +774,7 @@ button.btn {
   display: block;
   text-align: center;
   font-size: 22rpx;
-  color: var(--ink-4);
+  color: var(--ink-3);
   margin-top: 20rpx;
 }
 
@@ -770,7 +782,7 @@ button.btn {
 .row {
   display: flex;
   align-items: center;
-  padding: 24rpx 0;
+  padding: 16rpx 0;
   &:not(:last-child) {
     border-bottom: 1rpx solid var(--line);
   }
@@ -783,12 +795,14 @@ button.btn {
     font-size: 26rpx;
     font-weight: 600;
     color: var(--ink);
+    font-variant-numeric: tabular-nums;
   }
   .rd-sub {
     display: block;
     font-size: 18rpx;
-    color: var(--ink-4);
-    margin-top: 2rpx;
+    color: var(--ink-3);
+    margin-top: 4rpx;
+    font-variant-numeric: tabular-nums;
   }
 }
 .row-main {
@@ -803,6 +817,7 @@ button.btn {
 .rm-num {
   font-size: 32rpx;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 .rm-unit {
   font-size: 22rpx;
@@ -811,27 +826,40 @@ button.btn {
 .chip {
   font-size: 18rpx;
   padding: 4rpx 12rpx;
-  border-radius: 999rpx;
-  margin-left: 14rpx;
+  border-radius: var(--r-pill);
+  margin-left: 12rpx;
+  flex-shrink: 0;
   &.blue {
-    color: #2c6ea8;
+    color: var(--blue);
     background: var(--blue-tint);
   }
 }
+/* 删除：32px 图标块 + 隐形热区，避免与数值挤在一行误触 */
 .del {
-  font-size: 24rpx;
-  color: var(--ink-4);
-  padding: 8rpx 4rpx 8rpx 20rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--red);
+  background: var(--red-tint);
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  margin-left: 12rpx;
+  position: relative;
+  &::after { content: ""; position: absolute; inset: -12rpx; }
 }
 .row-kcal {
   text-align: right;
   flex-shrink: 0;
-  margin-right: 10rpx;
+  margin-right: 8rpx;
   .rk-num {
     font-size: 28rpx;
     font-weight: 600;
-    color: var(--brand-deep);
+    color: var(--brand);
+    font-variant-numeric: tabular-nums;
   }
   .rk-unit {
     font-size: 20rpx;
@@ -845,11 +873,12 @@ button.btn {
 .row-dur {
   font-size: 20rpx;
   color: var(--ink-3);
-  background: #f1f6f3;
-  padding: 6rpx 14rpx;
-  border-radius: 999rpx;
+  background: var(--surface-2);
+  padding: 6rpx 12rpx;
+  border-radius: var(--r-pill);
   margin-right: 6rpx;
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 .ex-ico {
   width: 60rpx;
@@ -860,14 +889,14 @@ button.btn {
   align-items: center;
   justify-content: center;
   font-size: 30rpx;
-  margin-right: 18rpx;
+  margin-right: 16rpx;
   flex-shrink: 0;
 }
 
 /* ============ 餐次选择 ============ */
 .meal-tabs {
   display: flex;
-  gap: 14rpx;
+  gap: 12rpx;
   margin-bottom: 24rpx;
 }
 .meal-tab {
@@ -875,12 +904,12 @@ button.btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 18rpx 0 16rpx;
+  padding: 16rpx 0 16rpx;
   border-radius: var(--r-md);
-  background: #f1f6f3;
-  transition: all 0.2s;
+  background: var(--surface-2);
+  transition: all var(--d-fast) var(--e-out);
   &.on {
-    background: #fff;
+    background: var(--card);
     box-shadow: inset 0 0 0 2rpx var(--brand);
   }
   .meal-ico {
@@ -891,83 +920,66 @@ button.btn {
     align-items: center;
     justify-content: center;
     font-size: 26rpx;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 10rpx;
-    &.mt1 {
-      background: linear-gradient(135deg, #f2b04c, #e5942c);
-    }
-    &.mt2 {
-      background: linear-gradient(135deg, #22bd85, #0d9a63);
-    }
-    &.mt3 {
-      background: linear-gradient(135deg, #5da9e6, #3d83c4);
-    }
-    &.mt4 {
-      background: linear-gradient(135deg, #a98bd8, #8a67c4);
-    }
+    font-weight: 700;
+    margin-bottom: 8rpx;
+    /* 餐次用浅底 + 深字，保证对比度（白字压浅橙只有 2.5:1） */
+    &.mt1 { color: var(--amber); background: var(--amber-tint); }
+    &.mt2 { color: var(--brand); background: var(--brand-tint); }
+    &.mt3 { color: var(--blue);  background: var(--blue-tint); }
+    &.mt4 { color: var(--ink-3); background: var(--surface-2); }
   }
   .meal-name {
     font-size: 22rpx;
     color: var(--ink-2);
   }
   &.on .meal-name {
-    color: var(--brand-deep);
+    color: var(--brand);
     font-weight: 600;
   }
 }
 .meal-badge {
   font-size: 20rpx;
-  font-weight: 500;
-  padding: 8rpx 18rpx;
-  border-radius: 999rpx;
-  margin-right: 18rpx;
+  font-weight: 600;
+  padding: 8rpx 16rpx;
+  border-radius: var(--r-pill);
+  margin-right: 16rpx;
   flex-shrink: 0;
-  color: #fff;
-  &.mt1 {
-    background: linear-gradient(135deg, #f2b04c, #e5942c);
-  }
-  &.mt2 {
-    background: linear-gradient(135deg, #22bd85, #0d9a63);
-  }
-  &.mt3 {
-    background: linear-gradient(135deg, #5da9e6, #3d83c4);
-  }
-  &.mt4 {
-    background: linear-gradient(135deg, #a98bd8, #8a67c4);
-  }
+  &.mt1 { color: var(--amber); background: var(--amber-tint); }
+  &.mt2 { color: var(--brand); background: var(--brand-tint); }
+  &.mt3 { color: var(--blue);  background: var(--blue-tint); }
+  &.mt4 { color: var(--ink-3); background: var(--surface-2); }
 }
 
 /* ============ 模式切换 ============ */
 .mode-switch {
   display: flex;
-  background: #edf3ef;
-  border-radius: 999rpx;
+  background: var(--surface-2);
+  border-radius: var(--r-pill);
   padding: 8rpx;
-  margin-bottom: 26rpx;
+  margin-bottom: 24rpx;
 }
 .mode {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18rpx 0;
+  padding: 16rpx 0;
   font-size: 27rpx;
   color: var(--ink-3);
-  border-radius: 999rpx;
-  transition: all 0.2s;
+  border-radius: var(--r-pill);
+  transition: all var(--d-fast) var(--e-out);
   &.on {
-    background: #fff;
-    color: var(--brand-deep);
+    background: var(--card);
+    color: var(--brand);
     font-weight: 600;
-    box-shadow: 0 6rpx 16rpx rgba(20, 94, 62, 0.1);
+    box-shadow: var(--shadow-card);
   }
 }
 .tip {
   font-size: 22rpx;
   color: var(--ink-3);
   display: block;
-  margin: -8rpx 0 22rpx;
+  margin: -8rpx 0 20rpx;
 }
 .link {
   color: var(--brand-deep);
@@ -978,14 +990,14 @@ button.btn {
 .food-list {
   max-height: 460rpx;
   overflow-y: auto;
-  margin-bottom: 22rpx;
+  margin-bottom: 20rpx;
 }
 .food-item {
   display: flex;
   align-items: center;
-  padding: 22rpx 24rpx;
+  padding: 20rpx 24rpx;
   border-radius: var(--r-md);
-  background: #f5f9f6;
+  background: var(--surface-2);
   margin-bottom: 12rpx;
   border: 1rpx solid transparent;
   &.picked {
@@ -1026,7 +1038,7 @@ button.btn {
   height: 40rpx;
   border-radius: 50%;
   background: var(--grad-brand);
-  color: #fff;
+  color: var(--on-brand);
   font-size: 24rpx;
   display: flex;
   align-items: center;
@@ -1035,16 +1047,16 @@ button.btn {
   flex-shrink: 0;
 }
 .amount-box {
-  background: #f5f9f6;
+  background: var(--surface-2);
   border-radius: var(--r-md);
-  padding: 22rpx 24rpx;
-  margin-bottom: 22rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 20rpx;
 }
 .amount-label {
   display: block;
   font-size: 22rpx;
   color: var(--ink-2);
-  margin-bottom: 14rpx;
+  margin-bottom: 12rpx;
 }
 .amount-row {
   display: flex;
@@ -1056,7 +1068,7 @@ button.btn {
   padding: 0 20rpx;
   font-size: 34rpx;
   font-weight: 600;
-  background: #fff;
+  background: var(--card);
 }
 .amount-unit {
   font-size: 26rpx;
@@ -1081,15 +1093,15 @@ button.btn {
 .chip-wrap {
   display: flex;
   flex-wrap: wrap;
-  gap: 14rpx;
+  gap: 12rpx;
   margin-bottom: 24rpx;
 }
 .chip {
   display: flex;
   align-items: center;
-  padding: 16rpx 28rpx;
-  background: #f1f6f3;
-  border-radius: 999rpx;
+  padding: 16rpx 24rpx;
+  background: var(--surface-2);
+  border-radius: var(--r-pill);
   font-size: 26rpx;
   color: var(--ink-2);
   border: 1rpx solid transparent;
@@ -1103,10 +1115,10 @@ button.btn {
 .chip-met {
   font-size: 18rpx;
   color: var(--brand);
-  margin-left: 10rpx;
-  background: #fff;
-  padding: 2rpx 12rpx;
-  border-radius: 999rpx;
+  margin-left: 8rpx;
+  background: var(--card);
+  padding: 4rpx 12rpx;
+  border-radius: var(--r-pill);
 }
 .estimate {
   display: flex;
@@ -1115,7 +1127,7 @@ button.btn {
   background: var(--brand-tint);
   border-radius: var(--r-md);
   padding: 24rpx;
-  margin-top: 18rpx;
+  margin-top: 16rpx;
   .est-ico {
     font-size: 40rpx;
     margin-bottom: 8rpx;
@@ -1137,7 +1149,7 @@ button.btn {
   margin: 6rpx 0 24rpx;
   .dl-text {
     font-size: 22rpx;
-    color: var(--ink-4);
+    color: var(--ink-3);
     padding: 0 20rpx;
   }
   &::before,
@@ -1150,7 +1162,7 @@ button.btn {
 }
 .intensity-row {
   display: flex;
-  gap: 14rpx;
+  gap: 12rpx;
 }
 .intensity {
   flex: 1;
@@ -1159,7 +1171,7 @@ button.btn {
   justify-content: center;
   padding: 20rpx 0;
   border-radius: var(--r-md);
-  background: #f1f6f3;
+  background: var(--surface-2);
   font-size: 26rpx;
   color: var(--ink-2);
   &.on {

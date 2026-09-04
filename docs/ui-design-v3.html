@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>fit-app 界面设计方案 v3 · 静水 Still Water</title>
+<style>
+/* ============================================================
+   fit-app Design Tokens v3 —— 「静水 Still Water」
+   所有对比度均经 WCAG 2.1 相对亮度公式实测，标注见 §3
+   ============================================================ */
+:root{
+  /* 表面 */
+  --bg:#F6F8F7; --surface:#FFFFFF; --surface-2:#EEF2F0;
+  --line:#E1E8E4; --line-strong:#CBD6CF;
+  /* 文字 */
+  --ink-1:#0F2419; --ink-2:#3D5A4C; --ink-3:#5A7568;
+  /* 品牌 */
+  --brand:#06794C; --brand-press:#046A43; --brand-tint:#DEF3E7;
+  --grad-brand:linear-gradient(135deg,#078157 0%,#04603B 100%);
+  --on-brand:#FFFFFF;
+  /* 语义 */
+  --amber:#8A5A00; --amber-fill:#B8791C; --amber-tint:#FFF4DC;
+  --red:#A8322A;  --red-fill:#D04538;   --red-tint:#FDECEA;
+  --blue:#2A6A9E; --blue-fill:#3D8BC9;  --blue-tint:#E5F0FA;
+  /* 间距 · 4pt 网格 */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:20px;
+  --s-6:24px; --s-8:32px; --s-10:40px; --s-12:48px; --s-16:64px;
+  /* 圆角 */
+  --r-xs:6px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px; --r-pill:999px;
+  /* 阴影 · 靠描边分层，阴影只做极轻辅助 */
+  --sh-1:0 1px 2px rgba(15,36,25,.04);
+  --sh-2:0 2px 8px rgba(15,36,25,.06);
+  --sh-3:0 8px 24px rgba(15,36,25,.10);
+  --sh-brand:0 6px 16px rgba(6,121,76,.24);
+  /* 动效 */
+  --e-out:cubic-bezier(.22,1,.36,1);
+  --e-io:cubic-bezier(.4,0,.2,1);
+  --d-fast:140ms; --d-base:240ms; --d-slow:420ms;
+  /* 字体 */
+  --font:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif;
+}
+[data-theme="dark"]{
+  --bg:#0E1512; --surface:#16211C; --surface-2:#1D2A24;
+  --line:#26332C; --line-strong:#33453B;
+  --ink-1:#E8EFEA; --ink-2:#A9BDB2; --ink-3:#87998F;
+  --brand:#4ECB8B; --brand-press:#3FB47A; --brand-tint:#14372A;
+  --grad-brand:linear-gradient(135deg,#4ECB8B 0%,#2E9E69 100%);
+  --on-brand:#0E1512;
+  --amber:#F0C069; --amber-fill:#D9A03F; --amber-tint:#3A2C12;
+  --red:#F08B80;   --red-fill:#C73F33;   --red-tint:#3A1D19;
+  --blue:#7FC0EE;  --blue-fill:#3D8BC9;  --blue-tint:#132A3A;
+  --sh-1:0 1px 2px rgba(0,0,0,.24);
+  --sh-2:0 2px 8px rgba(0,0,0,.32);
+  --sh-3:0 8px 24px rgba(0,0,0,.40);
+  --sh-brand:0 6px 16px rgba(78,203,139,.20);
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--ink-1); font-family:var(--font);
+  font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  transition:background var(--d-base) var(--e-io), color var(--d-base) var(--e-io);
+}
+.num{font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1}
+a{color:var(--brand); text-decoration:none}
+
+/* ---------- 文档外壳 ---------- */
+.topbar{
+  position:sticky; top:0; z-index:50; background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:saturate(180%) blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.topbar-in{max-width:1200px; margin:0 auto; padding:0 var(--s-6); height:56px;
+  display:flex; align-items:center; gap:var(--s-6)}
+.brandmark{display:flex; align-items:center; gap:var(--s-2); font-weight:700; font-size:15px; letter-spacing:-.01em}
+.brandmark .dot{width:18px;height:18px;border-radius:6px;background:var(--grad-brand)}
+.topnav{display:flex; gap:var(--s-1); margin-left:auto; overflow-x:auto; scrollbar-width:none}
+.topnav::-webkit-scrollbar{display:none}
+.topnav a{
+  font-size:13px; color:var(--ink-3); padding:6px 10px; border-radius:var(--r-sm);
+  white-space:nowrap; transition:all var(--d-fast) var(--e-out);
+}
+.topnav a:hover{color:var(--ink-1); background:var(--surface-2)}
+.theme-btn{
+  flex-shrink:0; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-2);
+  border-radius:var(--r-pill); padding:6px 14px; font-size:13px; cursor:pointer; font-family:inherit;
+  transition:all var(--d-fast) var(--e-out);
+}
+.theme-btn:hover{border-color:var(--brand); color:var(--brand)}
+
+.wrap{max-width:1200px; margin:0 auto; padding:0 var(--s-6)}
+section{padding:var(--s-16) 0; border-top:1px solid var(--line)}
+section:first-of-type{border-top:none}
+.eyebrow{
+  font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--brand); margin:0 0 var(--s-3);
+}
+h2{font-size:32px; line-height:1.25; font-weight:700; letter-spacing:-.02em; margin:0 0 var(--s-4)}
+h3{font-size:19px; font-weight:650; letter-spacing:-.01em; margin:var(--s-10) 0 var(--s-3)}
+h4{font-size:14px; font-weight:650; margin:0 0 var(--s-2); color:var(--ink-2)}
+p{margin:0 0 var(--s-4); color:var(--ink-2); max-width:74ch}
+.lead{font-size:17px; color:var(--ink-2)}
+
+/* ---------- 封面 ---------- */
+.hero-doc{padding:var(--s-16) 0 var(--s-12)}
+.hero-doc h1{
+  font-size:clamp(38px,6vw,64px); line-height:1.06; font-weight:750;
+  letter-spacing:-.035em; margin:0 0 var(--s-4);
+}
+.hero-doc h1 em{font-style:normal; background:var(--grad-brand); -webkit-background-clip:text;
+  background-clip:text; color:transparent}
+.hero-doc .sub{font-size:19px; color:var(--ink-2); max-width:60ch; margin-bottom:var(--s-8)}
+.chips{display:flex; flex-wrap:wrap; gap:var(--s-2)}
+.chip{
+  font-size:12.5px; font-weight:600; padding:6px 12px; border-radius:var(--r-pill);
+  background:var(--surface); border:1px solid var(--line); color:var(--ink-2);
+}
+.chip.g{background:var(--brand-tint); border-color:transparent; color:var(--brand)}
+
+/* ---------- 审计表 ---------- */
+.tbl{width:100%; border-collapse:collapse; font-size:13.5px; margin:var(--s-4) 0 var(--s-6)}
+.tbl th{
+  text-align:left; font-size:12px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ink-3); font-weight:700; padding:0 12px 10px; border-bottom:1px solid var(--line-strong);
+}
+.tbl td{padding:11px 12px; border-bottom:1px solid var(--line); color:var(--ink-2); vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.swatch{display:inline-block; width:22px; height:22px; border-radius:6px;
+  border:1px solid rgba(0,0,0,.10); vertical-align:-6px; margin-right:9px}
+.badge{font-size:11.5px; font-weight:700; padding:3px 9px; border-radius:var(--r-pill); white-space:nowrap}
+.b-fail{background:var(--red-tint); color:var(--red)}
+.b-lg{background:var(--amber-tint); color:var(--amber)}
+.b-pass{background:var(--brand-tint); color:var(--brand)}
+.b-new{background:var(--blue-tint); color:var(--blue)}
+
+/* ---------- 原则卡 ---------- */
+.grid{display:grid; gap:var(--s-4)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg);
+  padding:var(--s-5); box-shadow:var(--sh-1);
+  transition:box-shadow var(--d-base) var(--e-out), border-color var(--d-base) var(--e-out);
+}
+.card:hover{box-shadow:var(--sh-2); border-color:var(--line-strong)}
+.card .k{
+  width:34px;height:34px;border-radius:10px;background:var(--brand-tint);color:var(--brand);
+  display:grid;place-items:center;font-weight:700;font-size:15px;margin-bottom:var(--s-3)
+}
+.card p{margin:0; font-size:13.5px; color:var(--ink-3)}
+.card .t{font-size:15px;font-weight:650;color:var(--ink-1);margin:0 0 6px;letter-spacing:-.01em}
+
+/* ---------- Token 展板 ---------- */
+.tok-row{display:flex; flex-wrap:wrap; gap:var(--s-3)}
+.tok{flex:1 1 150px; border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden; background:var(--surface)}
+.tok .c{height:60px; display:flex; align-items:flex-end; padding:8px 10px; font-size:11px; font-weight:600}
+.tok .m{padding:8px 10px; font-size:11.5px; color:var(--ink-3); border-top:1px solid var(--line)}
+.tok .m b{display:block; color:var(--ink-1); font-size:12.5px; font-weight:650; letter-spacing:-.01em}
+code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.5px;
+  background:var(--surface-2); color:var(--ink-1); padding:2px 6px; border-radius:5px;
+}
+pre{
+  background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md);
+  padding:var(--s-4); overflow-x:auto; font-size:12.5px; line-height:1.7; margin:0 0 var(--s-4);
+  color:var(--ink-2); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+pre b{color:var(--brand); font-weight:600}
+
+/* ---------- 组件展台 ---------- */
+.stage{
+  background:var(--bg); border:1px solid var(--line); border-radius:var(--r-lg);
+  padding:var(--s-6); display:flex; flex-wrap:wrap; gap:var(--s-4); align-items:center;
+}
+.stage.dark-peek{background:var(--surface); align-items:flex-start; gap:var(--s-6)}
+.btn{
+  font-family:inherit; font-size:14px; font-weight:600; border-radius:var(--r-md);
+  padding:11px 20px; border:1px solid transparent; cursor:pointer;
+  transition:transform var(--d-fast) var(--e-out), box-shadow var(--d-fast) var(--e-out),
+             background var(--d-fast) var(--e-out), border-color var(--d-fast) var(--e-out);
+  min-height:44px;
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--grad-brand); color:var(--on-brand); box-shadow:var(--sh-brand)}
+.btn-soft{background:var(--brand-tint); color:var(--brand)}
+.btn-ghost{background:transparent; color:var(--ink-2); border-color:var(--line-strong)}
+.btn-ghost:hover{border-color:var(--brand); color:var(--brand)}
+.btn[disabled]{opacity:.45; cursor:not-allowed; transform:none; box-shadow:none}
+.btn-sm{font-size:13px; padding:8px 14px; min-height:38px}
+.field{display:flex; flex-direction:column; gap:6px; min-width:210px; flex:1}
+.field label{font-size:12.5px; font-weight:600; color:var(--ink-2)}
+.input{
+  font-family:inherit; font-size:14px; color:var(--ink-1); background:var(--surface);
+  border:1px solid var(--line-strong); border-radius:var(--r-md); padding:11px 13px; min-height:44px; width:100%;
+  transition:border-color var(--d-fast) var(--e-out), box-shadow var(--d-fast) var(--e-out);
+}
+.input::placeholder{color:var(--ink-3); opacity:.85}
+.input:focus{outline:none; border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-tint)}
+.seg{display:inline-flex; background:var(--surface-2); border-radius:var(--r-md); padding:3px; gap:2px}
+.seg button{
+  font-family:inherit; font-size:13px; font-weight:600; border:none; background:transparent;
+  color:var(--ink-3); padding:8px 16px; border-radius:9px; cursor:pointer; min-height:38px;
+  transition:all var(--d-fast) var(--e-out);
+}
+.seg button.on{background:var(--surface); color:var(--brand); box-shadow:var(--sh-1)}
+
+/* ---------- 手机屏 ---------- */
+.phones{display:flex; flex-wrap:wrap; gap:var(--s-8) var(--s-6); align-items:flex-start}
+.phone{
+  width:375px; flex-shrink:0; background:var(--bg); border-radius:38px;
+  border:1px solid var(--line-strong); box-shadow:var(--sh-3); overflow:hidden; position:relative;
+}
+.phone-cap{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 22px 8px; font-size:12px; font-weight:650;
+  font-variant-numeric:tabular-nums; color:var(--ink-1); background:var(--bg);
+}
+.screen{height:760px; overflow-y:auto; overflow-x:hidden; background:var(--bg)}
+.screen::-webkit-scrollbar{width:0}
+.pbar{display:flex; justify-content:space-between; padding:6px 22px 2px; font-size:11px;
+  color:var(--ink-2); font-variant-numeric:tabular-nums}
+.notch{position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:120px; height:22px; background:var(--ink-1); border-radius:0 0 14px 14px; opacity:.9; z-index:5}
+.pnote{margin-top:12px; font-size:13px; color:var(--ink-3); max-width:375px}
+.pnote b{color:var(--ink-1); font-weight:650}
+
+/* 手机内通用 */
+.p-head{padding:6px 16px 12px; display:flex; align-items:center; justify-content:space-between}
+.p-greet{padding:0 20px 4px}
+.p-greet .hi{font-size:25px; font-weight:700; letter-spacing:-.02em; color:var(--ink-1); line-height:1.2}
+.p-greet .dt{font-size:12.5px; color:var(--ink-3); margin-top:5px; display:flex; align-items:center; gap:6px}
+.p-greet .streak{color:var(--brand); font-weight:650}
+.p-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg);
+  margin:0 16px 12px; padding:16px; box-shadow:var(--sh-1)}
+.p-card-h{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+.p-card-t{font-size:15px; font-weight:650; color:var(--ink-1); letter-spacing:-.01em;
+  display:flex; align-items:center; gap:8px}
+.p-card-t::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--brand)}
+.p-card-t.amber::before{background:var(--amber-fill)}
+.p-card-t.blue::before{background:var(--blue-fill)}
+.p-meta{font-size:11.5px; color:var(--ink-3); font-weight:500}
+.pill{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:var(--r-pill)}
+.pill.g{background:var(--brand-tint); color:var(--brand)}
+.pill.a{background:var(--amber-tint); color:var(--amber)}
+.pill.r{background:var(--red-tint); color:var(--red)}
+.pill.b{background:var(--blue-tint); color:var(--blue)}
+.pill.n{background:var(--surface-2); color:var(--ink-3)}
+
+.wlabel{font-size:12.5px; color:var(--ink-3); font-weight:600}
+.wnum{display:flex; align-items:baseline; gap:4px; margin:6px 0 12px}
+.wnum .v{font-size:46px; font-weight:750; letter-spacing:-.04em; line-height:1;
+  color:var(--ink-1); font-variant-numeric:tabular-nums}
+.wnum .u{font-size:14px; color:var(--ink-3); font-weight:600}
+.wrow{display:flex; align-items:center; justify-content:space-between; gap:12px}
+.track{height:8px; background:var(--surface-2); border-radius:99px; overflow:hidden; flex:1}
+.track i{display:block; height:100%; background:var(--grad-brand); border-radius:99px;
+  transition:width var(--d-slow) var(--e-out)}
+.wends{display:flex; justify-content:space-between; font-size:11px; color:var(--ink-3); margin-top:7px;
+  font-variant-numeric:tabular-nums}
+.wsplit{display:flex; align-items:baseline; gap:6px; flex-shrink:0}
+.wsplit .lb{font-size:11.5px; color:var(--ink-3)}
+.wsplit .vv{font-size:19px; font-weight:700; color:var(--amber); font-variant-numeric:tabular-nums}
+.wsplit .vv.ok{color:var(--brand)}
+
+.cal{display:flex; align-items:center; gap:16px}
+.cal svg{flex-shrink:0}
+.cal-b{font-size:28px; font-weight:750; letter-spacing:-.03em; color:var(--ink-1);
+  font-variant-numeric:tabular-nums; line-height:1.1}
+.cal-l{font-size:11.5px; color:var(--ink-3); margin-top:2px}
+.klist{flex:1; display:flex; flex-direction:column; gap:9px}
+.klist .r{display:flex; align-items:center; justify-content:space-between; font-size:12.5px; color:var(--ink-2)}
+.klist .r b{font-size:14.5px; color:var(--ink-1); font-weight:650; font-variant-numeric:tabular-nums}
+.kdot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; vertical-align:1px}
+.macros{display:flex; gap:10px; margin-top:15px; padding-top:14px; border-top:1px solid var(--line)}
+.macro{flex:1; text-align:center}
+.macro .t{height:5px; border-radius:99px; background:var(--surface-2); overflow:hidden; margin-bottom:8px}
+.macro .t i{display:block; height:100%; border-radius:99px}
+.macro .v{font-size:14px; font-weight:650; color:var(--ink-1); font-variant-numeric:tabular-nums}
+.macro .l{font-size:11px; color:var(--ink-3); margin-top:2px}
+
+.tasks{display:flex; flex-direction:column}
+.task{display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line)}
+.task:last-child{border-bottom:none}
+.tbox{width:23px; height:23px; border-radius:50%; border:1.5px solid var(--line-strong);
+  display:grid; place-items:center; flex-shrink:0; background:var(--surface); transition:all var(--d-base) var(--e-out)}
+.tbox.on{background:var(--grad-brand); border-color:transparent}
+.tbox svg{opacity:0; transition:opacity var(--d-fast) var(--e-out)}
+.tbox.on svg{opacity:1}
+.ttext{font-size:13.5px; color:var(--ink-2); flex:1}
+.ttext.on{color:var(--ink-3); text-decoration:line-through}
+.tgo{font-size:12px; font-weight:650; color:var(--brand); background:var(--brand-tint);
+  padding:6px 13px; border-radius:var(--r-pill)}
+
+.week{display:flex; justify-content:space-between}
+.wd{display:flex; flex-direction:column; align-items:center; gap:7px}
+.wd .l{font-size:11.5px; color:var(--ink-3)}
+.wd .l.on{color:var(--brand); font-weight:700}
+.wd .b{width:30px; height:30px; border-radius:10px; background:var(--surface-2);
+  display:grid; place-items:center; transition:all var(--d-base) var(--e-out)}
+.wd .b.on{background:var(--grad-brand); box-shadow:0 4px 10px rgba(6,121,76,.28)}
+.wd .b svg{opacity:0}
+.wd .b.on svg{opacity:1}
+.wsum{margin-top:16px; padding-top:12px; border-top:1px solid var(--line);
+  font-size:12px; color:var(--ink-3); line-height:1.7}
+.wsum b{color:var(--brand); font-weight:700; font-variant-numeric:tabular-nums}
+
+.tabbar{display:flex; border-top:1px solid var(--line); background:var(--surface);
+  padding:7px 0 10px; position:sticky; bottom:0}
+.tab{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+  font-size:10.5px; color:var(--ink-3); font-weight:600; font-family:inherit;
+  background:none; border:none; cursor:pointer; padding:0}
+.tab.on{color:var(--brand)}
+.tab svg{width:23px; height:23px}
+
+.daterow{display:flex; align-items:center; justify-content:space-between; padding:4px 16px 12px}
+.daterow .mid{text-align:center}
+.daterow .m1{font-size:15px; font-weight:650; color:var(--ink-1)}
+.daterow .m2{font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums}
+.arrow{width:32px; height:32px; border-radius:50%; border:1px solid var(--line-strong);
+  background:var(--surface); display:grid; place-items:center; color:var(--ink-2); font-size:17px; cursor:pointer}
+.arrow.dim{opacity:.35; cursor:default}
+.meals{display:flex; gap:8px; margin-bottom:12px}
+.meal{flex:1; background:var(--surface-2); border:1px solid transparent; border-radius:var(--r-md);
+  padding:10px 4px; text-align:center; cursor:pointer; transition:all var(--d-fast) var(--e-out)}
+.meal.on{background:var(--brand-tint); border-color:var(--brand)}
+.meal .ic{font-size:16px; display:block}
+.meal .nm{font-size:11.5px; font-weight:650; color:var(--ink-3); margin-top:2px}
+.meal.on .nm{color:var(--brand)}
+.rec{display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line)}
+.rec:last-child{border-bottom:none}
+.rec .d{text-align:center; width:38px; flex-shrink:0}
+.rec .d .a{font-size:13px; font-weight:650; color:var(--ink-1); font-variant-numeric:tabular-nums}
+.rec .d .b{font-size:10px; color:var(--ink-3)}
+.rec .n{font-size:14px; font-weight:650; color:var(--ink-1); font-variant-numeric:tabular-nums; flex:1}
+.rec .del{font-size:12px; color:var(--red); font-weight:600}
+
+.ranges{display:flex; gap:8px; padding:0 16px 4px}
+.range{flex:1; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md);
+  padding:9px 0; text-align:center; cursor:pointer; transition:all var(--d-fast) var(--e-out)}
+.range.on{background:var(--grad-brand); border-color:transparent}
+.range .n{font-size:15px; font-weight:700; color:var(--ink-1); font-variant-numeric:tabular-nums}
+.range.on .n{color:var(--on-brand)}
+.range .u{font-size:10.5px; color:var(--ink-3)}
+.range.on .u{color:var(--on-brand); opacity:.8}
+.legend{display:flex; gap:14px; font-size:11px; color:var(--ink-3)}
+.legend span{display:flex; align-items:center; gap:5px}
+.legend i{width:11px; height:2.5px; border-radius:2px; display:block}
+.legend i.dash{background:repeating-linear-gradient(90deg,var(--ink-3) 0 3px,transparent 3px 6px)}
+.mets{display:flex; gap:8px; margin-top:16px; padding-top:16px; border-top:1px solid var(--line)}
+.met{flex:1; text-align:center}
+.met .v{font-size:17px; font-weight:700; color:var(--ink-1); font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+.met .v.down{color:var(--brand)}
+.met .l{font-size:10.5px; color:var(--ink-3); margin-top:3px}
+.bars{display:flex; align-items:flex-end; gap:3px; height:96px; padding:0 2px}
+.bcol{flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:2px; height:100%}
+.bin{width:100%; background:var(--brand); border-radius:2px 2px 0 0; min-height:0}
+.bout{width:100%; background:var(--blue-fill); border-radius:0 0 2px 2px; min-height:0}
+.baxis{display:flex; justify-content:space-between; font-size:10px; color:var(--ink-3); margin-top:8px}
+
+.score{display:flex; align-items:center; gap:16px}
+.score .n{font-size:32px; font-weight:750; color:var(--ink-1); font-variant-numeric:tabular-nums; letter-spacing:-.03em}
+.stage-box{flex:1}
+.stage-box .l{font-size:11.5px; color:var(--ink-3)}
+.stage-box .v{font-size:16px; font-weight:700; color:var(--brand); margin-top:2px}
+.blk{margin-top:16px}
+.blk .bt{font-size:12.5px; font-weight:700; color:var(--ink-1); display:flex; align-items:center; gap:7px; margin-bottom:8px}
+.blk .bi{width:16px; height:16px; border-radius:50%; display:grid; place-items:center;
+  font-size:10px; font-weight:800; color:#fff; flex-shrink:0}
+.bi.warn{background:var(--amber-fill)}
+.bi.good{background:var(--brand)}
+.blk .it{font-size:12.5px; color:var(--ink-2); padding:7px 11px; border-radius:var(--r-sm);
+  margin-bottom:6px; line-height:1.55}
+.blk .it.risk{background:var(--amber-tint)}
+.blk .it.tip{background:var(--brand-tint)}
+
+.mrow{display:flex; align-items:center; gap:13px; padding:13px 0; border-bottom:1px solid var(--line); cursor:pointer}
+.mrow:last-child{border-bottom:none}
+.mico{width:36px; height:36px; border-radius:11px; display:grid; place-items:center;
+  font-size:16px; flex-shrink:0; background:var(--surface-2)}
+.mtxt{flex:1; min-width:0}
+.mtxt .t{font-size:14px; font-weight:600; color:var(--ink-1)}
+.mtxt .s{font-size:11.5px; color:var(--ink-3); margin-top:1px}
+.chev{color:var(--line-strong); font-size:19px; flex-shrink:0}
+.toggle{width:44px; height:26px; border-radius:99px; background:var(--line-strong);
+  position:relative; flex-shrink:0; transition:background var(--d-base) var(--e-out)}
+.toggle.on{background:var(--brand)}
+.toggle i{position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
+  background:#fff; box-shadow:var(--sh-1); transition:transform var(--d-base) var(--e-out)}
+.toggle.on i{transform:translateX(18px)}
+
+.goalrow{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.gitem{text-align:center}
+.gcirc{width:66px; height:66px; border-radius:50%; display:grid; place-items:center;
+  font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; border:1.5px solid var(--line-strong);
+  color:var(--ink-2)}
+.gcirc.target{border-color:var(--brand); color:var(--brand); background:var(--brand-tint)}
+.gitem .gl{font-size:11px; color:var(--ink-3); margin-top:7px}
+.gflow{flex:1; text-align:center; padding-bottom:18px}
+.gflow .ar{font-size:17px; color:var(--ink-3)}
+.gflow .tg{font-size:11.5px; font-weight:650; color:var(--amber); background:var(--amber-tint);
+  padding:4px 10px; border-radius:var(--r-pill); display:inline-block; margin-top:5px}
+.eta{display:flex; align-items:center; gap:10px; background:var(--brand-tint);
+  border-radius:var(--r-md); padding:13px 15px; margin-top:4px}
+.eta .ic{font-size:17px}
+.eta .t1{font-size:11.5px; color:var(--brand); font-weight:600}
+.eta .t2{font-size:14px; color:var(--ink-1); font-weight:700; font-variant-numeric:tabular-nums}
+.fab-save{margin:12px 16px 4px}
+.fab-save .btn{width:100%}
+.kcalgrid{display:flex; gap:8px}
+.kcalgrid .field{min-width:0}
+.disclaim{font-size:10.5px; color:var(--ink-3); text-align:center; padding:12px 16px 20px; line-height:1.65}
+.p-title{padding:2px 20px 12px; font-size:22px; font-weight:700; letter-spacing:-.02em; color:var(--ink-1)}
+.empty{text-align:center; padding:26px 10px}
+.empty .ic{font-size:30px; opacity:.5}
+.empty .t{font-size:13.5px; font-weight:600; color:var(--ink-2); margin-top:9px}
+.empty .s{font-size:11.5px; color:var(--ink-3); margin-top:4px}
+
+/* ============================================================
+   布局系统 v3.1 —— 统一空间尺度
+   页面边距 16 · 卡片间距 12 · 卡片内边距 16
+   全部落在 4pt 网格，杜绝 6/10/14/18/22/26/30rpx 这类零碎值
+   ============================================================ */
+.p-card{margin:0 16px 12px}
+.p-greet{padding:0 16px}
+.grid7{display:grid; grid-template-columns:repeat(7,1fr); gap:4px}
+.grid7 .wd{align-items:center}
+.grid7 .wd .b{width:100%; max-width:32px; height:32px}
+.ell{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0}
+
+/* 今日概览 · 两栏 */
+.ov2{display:grid; grid-template-columns:1fr 1fr}
+.ov2 .cell{padding:2px 0}
+.ov2 .cell+.cell{border-left:1px solid var(--line); padding-left:16px; margin-left:16px}
+.ov2 .lb{font-size:11.5px; color:var(--ink-3); font-weight:600; display:flex; align-items:center; gap:5px}
+.ov2 .vv{font-size:30px; font-weight:750; letter-spacing:-.035em; color:var(--ink-1);
+  font-variant-numeric:tabular-nums; line-height:1.15; margin-top:5px}
+.ov2 .vv .u{font-size:13px; font-weight:600; color:var(--ink-3); margin-left:3px; letter-spacing:0}
+.ov2 .sub{font-size:11.5px; color:var(--ink-3); margin-top:3px; font-variant-numeric:tabular-nums}
+.ov2 .sub b{color:var(--brand); font-weight:700}
+.ov2 .sub .am{color:var(--amber); font-weight:700}
+
+/* 供能比分段条（替换三条独立进度条） */
+.mbar{display:flex; height:8px; border-radius:99px; overflow:hidden; background:var(--surface-2); margin-top:16px}
+.mbar i{display:block; height:100%}
+.mlegend{display:flex; justify-content:space-between; margin-top:9px; gap:6px}
+.mlegend span{font-size:11.5px; color:var(--ink-3); display:flex; align-items:center; gap:5px}
+.mlegend b{color:var(--ink-1); font-weight:650; font-variant-numeric:tabular-nums}
+.mlegend i{width:7px; height:7px; border-radius:2px; display:block; flex-shrink:0}
+
+/* 体重卡 · 数字与副信息同行 */
+.wline{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+.wline .big{font-size:32px; font-weight:750; letter-spacing:-.035em; color:var(--ink-1);
+  font-variant-numeric:tabular-nums; line-height:1.1}
+.wline .big .u{font-size:13px; font-weight:600; color:var(--ink-3); margin-left:3px; letter-spacing:0}
+.wline .gapv{font-size:13px; color:var(--amber); font-weight:650; font-variant-numeric:tabular-nums; flex-shrink:0}
+.wline .gapv.ok{color:var(--brand)}
+
+/* 表单节奏：标签→输入框 6px，字段间 12px */
+.field{margin-bottom:12px}
+.field label{margin-bottom:6px}
+
+/* 记录页 · 日期条压缩为单行 */
+.datepill{display:flex; align-items:center; justify-content:center; gap:16px; padding:0 16px 12px}
+.datepill .mid{text-align:center; min-width:160px}
+.datepill .t{font-size:14px; font-weight:650; color:var(--ink-1)}
+.datepill .s{font-size:11px; color:var(--ink-3); font-variant-numeric:tabular-nums}
+
+/* 记录行 · 删除改为 32px 触摸块 + 隐形扩展热区 */
+.rec .del{width:32px; height:32px; border-radius:var(--r-sm); display:grid; place-items:center;
+  color:var(--red); background:var(--red-tint); flex-shrink:0; position:relative}
+.rec .del::after{content:""; position:absolute; inset:-6px}
+
+/* 趋势 · 药丸范围切换（右上角） */
+.rangepill{display:flex; background:var(--surface-2); border-radius:var(--r-pill); padding:3px}
+.rangepill button{font-family:inherit; font-size:12px; font-weight:650; border:none; background:transparent;
+  color:var(--ink-3); padding:0 12px; min-height:30px; border-radius:var(--r-pill); cursor:pointer;
+  font-variant-numeric:tabular-nums; position:relative; transition:all var(--d-fast) var(--e-out)}
+.rangepill button::after{content:""; position:absolute; inset:-7px 0}
+.rangepill button.on{background:var(--surface); color:var(--brand); box-shadow:var(--sh-1)}
+
+/* 趋势 · y 轴标注 + 图例下移 */
+.ywrap{position:relative; padding-left:32px}
+.ywrap .ylab{position:absolute; left:0; font-size:10px; color:var(--ink-3);
+  font-variant-numeric:tabular-nums; transform:translateY(-50%)}
+.ywrap .ybase{position:absolute; left:0; right:0; border-top:1px dashed var(--line-strong)}
+.chartlegend{display:flex; gap:16px; justify-content:center; margin-top:10px;
+  font-size:11px; color:var(--ink-3)}
+.chartlegend span{display:flex; align-items:center; gap:5px}
+.chartlegend i{width:12px; height:2.5px; border-radius:2px; display:block}
+.chartlegend i.dash{background:repeating-linear-gradient(90deg,var(--ink-3) 0 3px,transparent 3px 6px)}
+
+/* 我的页 · 横向头部 + 分组标题 */
+.phead2{display:flex; align-items:center; gap:13px; padding:26px 16px 16px}
+.phead2 .av{width:54px; height:54px; border-radius:50%; background:var(--grad-brand);
+  display:grid; place-items:center; color:var(--on-brand); font-size:21px; font-weight:700;
+  box-shadow:var(--sh-brand); flex-shrink:0}
+.phead2 .nm{font-size:18px; font-weight:700; color:var(--ink-1); letter-spacing:-.02em}
+.phead2 .st{font-size:11.5px; color:var(--ink-3); margin-top:2px; font-variant-numeric:tabular-nums}
+.phead2 .st b{color:var(--brand); font-weight:700}
+.grp{font-size:11.5px; font-weight:700; color:var(--ink-3); letter-spacing:.04em; padding:8px 16px 8px}
+.safearea{height:12px}
+
+/* 双列字段网格 */
+.g2f{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+
+/* 首屏预算图 */
+.vstack{position:relative; border-radius:var(--r-md); overflow:hidden;
+  border:1px solid var(--line); margin-top:8px}
+.vseg{display:flex; align-items:center; padding:0 10px; font-size:11px; font-weight:650;
+  color:var(--ink-1); background:var(--surface-2); border-bottom:1px solid var(--bg);
+  font-variant-numeric:tabular-nums}
+.vseg.s-w{background:color-mix(in srgb, var(--brand) 10%, var(--surface))}
+.vseg.s-a{background:color-mix(in srgb, var(--brand) 24%, var(--surface))}
+.vseg.s-t{background:color-mix(in srgb, var(--brand) 38%, var(--surface))}
+.fold{position:absolute; left:0; right:0; height:0; border-top:2px dashed var(--red); z-index:2}
+.fold span{position:absolute; right:6px; top:-17px; font-size:10px; color:var(--red); font-weight:700;
+  background:var(--surface); padding:1px 6px; border-radius:4px}
+
+/* 深色模式下环形渐变跟随品牌令牌 */
+[data-theme="dark"] #ringg stop:first-child{stop-color:#4ECB8B}
+[data-theme="dark"] #ringg stop:last-child{stop-color:#2E9E69}
+
+/* 列表项节奏收紧到 4pt（11 → 9 太碎，统一 8） */
+.task{padding:8px 0}
+.rec{padding:8px 0}
+.fab-save{margin:12px 16px 4px}
+
+/* 把早期组件里不合网格的值拉回 4pt */
+.p-head{padding:6px 16px 12px}
+.p-card-h{margin-bottom:12px}
+.blk{margin-top:16px}
+.eta{margin:0 16px 12px}
+.disclaim{padding:12px 16px 20px}
+.macros{margin-top:16px; padding-top:16px}
+.wsum{margin-top:16px; padding-top:12px}
+.mets{margin-top:16px; padding-top:16px}
+.p-title{padding:2px 16px 12px}
+
+/* 落地清单 */
+.steps{counter-reset:s; list-style:none; padding:0; margin:0}
+.steps li{counter-increment:s; position:relative; padding:0 0 var(--s-5) var(--s-10);
+  border-left:1px solid var(--line); margin-left:9px}
+.steps li:last-child{border-left-color:transparent; padding-bottom:0}
+.steps li::before{
+  content:counter(s); position:absolute; left:-13px; top:-2px; width:26px; height:26px;
+  border-radius:50%; background:var(--brand-tint); color:var(--brand);
+  font-size:12px; font-weight:700; display:grid; place-items:center;
+}
+.steps .st{font-size:15px; font-weight:650; color:var(--ink-1); margin-bottom:3px}
+.steps .sd{font-size:13px; color:var(--ink-3); margin:0}
+footer{padding:var(--s-10) 0 var(--s-16); border-top:1px solid var(--line);
+  font-size:12.5px; color:var(--ink-3); display:flex; justify-content:space-between; gap:var(--s-4); flex-wrap:wrap}
+@media (max-width:900px){
+  .g3,.g4{grid-template-columns:repeat(2,1fr)}
+  .topnav{display:none}
+}
+@media (max-width:620px){ .g2,.g3,.g4{grid-template-columns:1fr} .wrap{padding:0 var(--s-4)} }
+@media (prefers-reduced-motion:reduce){ *{transition:none !important; animation:none !important} }
+</style>
+</head>
+<body>
+
+<!-- 图标精灵 -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-today" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="4.5" width="18" height="16" rx="3.5"/><path d="M8 2.5v4M16 2.5v4M3 9.5h18"/><path d="M8.5 14.5l2.2 2.2 4.3-4.3"/>
+  </symbol>
+  <symbol id="i-record" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.5v17M3.5 12h17"/><circle cx="12" cy="12" r="8.5"/>
+  </symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3.5 20.5h17"/><path d="M4 16l4.5-5 3.5 3L20 6"/><path d="M15.5 6H20v4.5"/>
+  </symbol>
+  <symbol id="i-profile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="3.8"/><path d="M4.5 20.5c.9-3.8 3.9-5.8 7.5-5.8s6.6 2 7.5 5.8"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 12.5l4.5 4.5L19 7"/>
+  </symbol>
+  <symbol id="i-trash" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2.5 4h10M5.8 4V2.6h3.4V4M3.9 4l.6 8.4h6l.6-8.4M6.4 6.4v4M8.6 6.4v4"/>
+  </symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 15.5V10a6 6 0 10-12 0v5.5L4.5 18h15L18 15.5z"/><path d="M9.8 21a2.4 2.4 0 004.4 0"/>
+  </symbol>
+</svg>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brandmark"><span class="dot"></span> fit-app · UI v3</div>
+    <nav class="topnav">
+      <a href="#s0">设计背景</a><a href="#s1">现状审计</a><a href="#s2">设计原则</a>
+      <a href="#s3">设计令牌</a><a href="#s4">组件库</a><a href="#s5">布局系统</a><a href="#s6">六屏设计</a>
+      <a href="#s7">深色模式</a><a href="#s8">无障碍</a><a href="#s9">落地清单</a>
+    </nav>
+    <button class="theme-btn" id="themeBtn" type="button">切换深色</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ============ 封面 ============ -->
+<header class="hero-doc">
+  <p class="eyebrow">Interface Design Proposal · v3</p>
+  <h1>静水<br /><em>Still Water</em></h1>
+  <p class="sub">
+    fit-app 减重记录小程序的第三版界面设计方案，含布局专项优化。保留「翡翠绿」的品牌认知，
+    把视觉重心从「装饰」移到「数据」：一套全部通过 WCAG AA 实测的令牌系统，替换掉当前 6 处不达标的配色；
+    一套 4pt 网格的布局尺度，把高频数据拉回首屏、把散落的间距收进规矩。
+  </p>
+  <div class="chips">
+    <span class="chip g">6 屏高保真</span>
+    <span class="chip g">布局 v3.1</span>
+    <span class="chip">52 个设计令牌</span>
+    <span class="chip">对比度全部 AA 达标</span>
+    <span class="chip">4pt 空间网格</span>
+    <span class="chip">首屏预算 575px</span>
+    <span class="chip">浅色 + 深色双主题</span>
+    <span class="chip">uni-app / rpx 可直接落地</span>
+  </div>
+</header>
+
+<!-- ============ §0 设计背景 ============ -->
+<section id="s0">
+  <p class="eyebrow">01 · Design Context</p>
+  <h2>先说清楚：这是为谁设计的</h2>
+  <p class="lead">
+    设计方案的质量取决于对使用情境的理解，而不是对代码的阅读。以下是本次设计的上下文假设——
+    如果任何一条与实际不符，成本很低，改这一节就能重跑整套令牌。
+  </p>
+
+  <div class="grid g3">
+    <div class="card">
+      <div class="k">谁</div>
+      <p class="t">正在做体重管理的中文用户，20–40 岁</p>
+      <p>多数是第一次认真记录。他们不是健身教练，看不懂「TDEE」「热量缺口」这类词，需要界面替他们翻译。</p>
+    </div>
+    <div class="card">
+      <div class="k">何时</div>
+      <p class="t">饭后、起床后、睡前的 10–30 秒碎片时间</p>
+      <p>单手、竖屏、常在移动中或光线不足的环境。这意味着：主操作必须在拇指区，关键数字必须一眼可读。</p>
+    </div>
+    <div class="card">
+      <div class="k">做什么</div>
+      <p class="t">四件事，按频率排序</p>
+      <p>① 记录（体重/饮食/运动）② 判断「我还能吃多少」③ 看趋势获得正反馈 ④ 偶尔调整目标。</p>
+    </div>
+  </div>
+
+  <h3>语气：可信，且不制造焦虑</h3>
+  <p>
+    这是减重类产品最容易做错的一点。超标就用刺眼的红色横幅警告，短期提高点击，长期让人卸载。
+    v3 的处理是：<b>超标不再是「错误」，而是「信息」</b>——配色从警告红换成中性琥珀，
+    并附一句接下来能做什么，而不是只说「你超了」。具体见 §5 今日热量卡。
+  </p>
+
+  <h3>与 v1 / v2 的关系</h3>
+  <div class="grid g3">
+    <div class="card">
+      <p class="t">v1 清爽风</p>
+      <p>中性灰 + 强调绿，功能完整但缺乏记忆点，卡片同质化严重。</p>
+    </div>
+    <div class="card">
+      <p class="t">v2 活力青绿（当前线上）</p>
+      <p>加入沉浸式绿色渐变头部，视觉辨识度提升明显。但带来两个问题：渐变上的白字对比度不达标；渐变面积过大挤压了内容密度。</p>
+    </div>
+    <div class="card" style="border-color:var(--brand)">
+      <p class="t">v3 静水（本方案）</p>
+      <p>收回装饰性渐变，把节省的视觉预算全部给数据和留白。品牌绿保留，但只用在「可行动」的地方。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ §1 审计 ============ -->
+<section id="s1">
+  <p class="eyebrow">02 · Audit</p>
+  <h2>现状审计：实测出来的六个问题</h2>
+  <p class="lead">
+    对现有 <code>App.vue</code> 中的令牌逐项跑了 WCAG 2.1 相对亮度公式。
+    结果不是「感觉偏淡」，而是有明确数值的低对比——这些颜色正被用在正文、副标题和页脚上。
+  </p>
+
+  <table class="tbl">
+    <thead><tr><th>令牌</th><th>色值</th><th>用于</th><th>白底对比度</th><th>页面底对比度</th><th>结论</th></tr></thead>
+    <tbody>
+      <tr><td><span class="swatch" style="background:#8da698"></span><code>--ink-3</code></td><td>#8DA698</td><td>次要说明、单位、日期</td><td class="num">2.61 : 1</td><td class="num">2.41 : 1</td><td><span class="badge b-fail">不达标</span></td></tr>
+      <tr><td><span class="swatch" style="background:#b6c7bd"></span><code>--ink-4</code></td><td>#B6C7BD</td><td>页脚免责声明</td><td class="num">1.77 : 1</td><td class="num">1.63 : 1</td><td><span class="badge b-fail">不达标</span></td></tr>
+      <tr><td><span class="swatch" style="background:#0e9e68"></span><code>--brand</code></td><td>#0E9E68</td><td>主按钮底色 + 白字</td><td class="num">3.44 : 1</td><td class="num">3.17 : 1</td><td><span class="badge b-lg">仅大字号</span></td></tr>
+      <tr><td><span class="swatch" style="background:#14b97e"></span>hero 渐变亮端</td><td>#14B97E</td><td>首页问候语（白字）</td><td class="num">2.54 : 1</td><td>—</td><td><span class="badge b-fail">不达标</span></td></tr>
+      <tr><td><span class="swatch" style="background:#d9962f"></span><code>--amber</code></td><td>#D9962F</td><td>提醒标签文字</td><td class="num">2.51 : 1</td><td class="num">2.32 : 1</td><td><span class="badge b-fail">不达标</span></td></tr>
+      <tr><td><span class="swatch" style="background:#4e9fe0"></span><code>--blue</code></td><td>#4E9FE0</td><td>运动消耗标签文字</td><td class="num">2.85 : 1</td><td class="num">2.63 : 1</td><td><span class="badge b-fail">不达标</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>三个结构性问题</h3>
+  <div class="grid g3">
+    <div class="card">
+      <div class="k">1</div>
+      <p class="t">两套令牌并行</p>
+      <p><code>App.vue</code> 用 CSS 变量（品牌绿 #0E9E68），<code>uni.scss</code> 用 SCSS 变量（#10B981）。两套颜色不一致，改一处漏一处。</p>
+    </div>
+    <div class="card">
+      <div class="k">2</div>
+      <p class="t">没有组件层</p>
+      <p><code>.card</code> / <code>.card-head</code> / <code>.btn</code> / <code>.field</code> 在 6 个页面里各写一遍，散落着 <code>#fff</code>、<code>#e6efea</code>、<code>#edf3ef</code> 等硬编码色值。</p>
+    </div>
+    <div class="card">
+      <div class="k">3</div>
+      <p class="t">圆角与阴影不成体系</p>
+      <p>圆角出现 32/24/18/8/6/3rpx 六种值，阴影两种。层次主要靠阴影而非描边，在浅底上区分度不足。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ §2 原则 ============ -->
+<section id="s2">
+  <p class="eyebrow">03 · Principles</p>
+  <h2>五条设计原则</h2>
+  <div class="grid g2">
+    <div class="card"><div class="k">01</div><p class="t">数字是主角，其余都是陪衬</p><p>用户打开这个应用只想看两个数：体重多少、还能吃多少。所有排版权重向这两个数字倾斜，装饰元素让位。数字统一启用等宽数字（tabular-nums），避免刷新时跳动。</p></div>
+    <div class="card"><div class="k">02</div><p class="t">颜色只表达意义，不做装饰</p><p>绿色＝可行动/达标，琥珀＝需要注意，红＝超标，蓝＝消耗。任何一个色块都要能回答「它想让我做什么」，否则改成中性色。</p></div>
+    <div class="card"><div class="k">03</div><p class="t">先描边，后阴影</p><p>浅色界面里，1px 描边比模糊阴影更能界定边界，也更省渲染。阴影只用于真正浮起的层（悬浮按钮、tabbar），且透明度压到 10% 以内。</p></div>
+    <div class="card"><div class="k">04</div><p class="t">拇指优先，主操作在下</p><p>高频操作落在屏幕下半部；危险操作（删除）永远不与主操作并排，且放在远端或二级入口。</p></div>
+    <div class="card"><div class="k">05</div><p class="t">不惩罚用户</p><p>漏记、超标、断卡都不是错误。空状态和超标态给出的是下一步建议，不是警告。</p></div>
+    <div class="card" style="border-color:var(--brand)"><div class="k">+</div><p class="t">一个记忆点：液态热量环</p><p>热量环不使用常规甜甜圈的均匀粗细，而是用带圆头的粗描边 + 呼吸式的渐变填充，让「剩余额度」看起来像容器里的水位——这是本方案唯一的装饰性表达。</p></div>
+  </div>
+</section>
+
+<!-- ============ §3 令牌 ============ -->
+<section id="s3">
+  <p class="eyebrow">04 · Design Tokens</p>
+  <h2>设计令牌 v3</h2>
+  <p class="lead">每个颜色令牌都标注了实测对比度。文字类要求 ≥ 4.5:1（WCAG AA 正文），图形/描边类要求 ≥ 3:1。</p>
+
+  <h3>中性色 · 表面</h3>
+  <div class="tok-row">
+    <div class="tok"><div class="c" style="background:#F6F8F7;color:#0F2419">--bg</div><div class="m"><b>页面底 #F6F8F7</b>页面背景</div></div>
+    <div class="tok"><div class="c" style="background:#FFFFFF;color:#0F2419;border-bottom:1px solid #E1E8E4">--surface</div><div class="m"><b>卡片 #FFFFFF</b>主表面</div></div>
+    <div class="tok"><div class="c" style="background:#EEF2F0;color:#0F2419">--surface-2</div><div class="m"><b>次级底 #EEF2F0</b>轨道 / 未选中</div></div>
+    <div class="tok"><div class="c" style="background:#E1E8E4;color:#5A7568">--line</div><div class="m"><b>分隔线 #E1E8E4</b>描边（非文字）</div></div>
+    <div class="tok"><div class="c" style="background:#CBD6CF;color:#0F2419">--line-strong</div><div class="m"><b>强描边 #CBD6CF</b>输入框边框 1.47:1</div></div>
+  </div>
+
+  <h3>文字层级</h3>
+  <table class="tbl">
+    <thead><tr><th>令牌</th><th>色值</th><th>用途</th><th>白底</th><th>页面底</th><th>结论</th></tr></thead>
+    <tbody>
+      <tr><td><span class="swatch" style="background:#0F2419"></span><code>--ink-1</code></td><td>#0F2419</td><td>标题、主数字</td><td class="num">16.32 : 1</td><td class="num">15.30 : 1</td><td><span class="badge b-pass">AAA</span></td></tr>
+      <tr><td><span class="swatch" style="background:#3D5A4C"></span><code>--ink-2</code></td><td>#3D5A4C</td><td>正文、列表项</td><td class="num">7.59 : 1</td><td class="num">7.12 : 1</td><td><span class="badge b-pass">AAA</span></td></tr>
+      <tr><td><span class="swatch" style="background:#5A7568"></span><code>--ink-3</code></td><td>#5A7568</td><td>说明、单位、占位符</td><td class="num">5.02 : 1</td><td class="num">4.71 : 1</td><td><span class="badge b-new">AA（v2 为 2.61）</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>品牌色</h3>
+  <div class="tok-row">
+    <div class="tok"><div class="c" style="background:#06794C;color:#fff">--brand</div><div class="m"><b>品牌绿 #06794C</b>白字 5.46:1 · 作文字 5.46:1</div></div>
+    <div class="tok"><div class="c" style="background:#046A43;color:#fff">--brand-press</div><div class="m"><b>按压态 #046A43</b>白字 6.67:1</div></div>
+    <div class="tok"><div class="c" style="background:linear-gradient(135deg,#078157,#04603B);color:#fff">--grad-brand</div><div class="m"><b>渐变 #078157 → #04603B</b>两端白字 4.90 / 7.66</div></div>
+    <div class="tok"><div class="c" style="background:#DEF3E7;color:#06794C">--brand-tint</div><div class="m"><b>浅绿底 #DEF3E7</b>绿字 4.70:1</div></div>
+  </div>
+  <p style="font-size:13.5px">
+    v2 的品牌绿 #0E9E68 白字只有 3.44:1，只能用于大字号。v3 加深到 #06794C 后，
+    <b>同一个色值既能做按钮底色配白字，也能直接当文字色用</b>——一套颜色覆盖两种场景，令牌数量反而减少了。
+  </p>
+
+  <h3>语义色 · 文字 / 填充 / 浅底 三档</h3>
+  <table class="tbl">
+    <thead><tr><th>语义</th><th>文字色（≥4.5）</th><th>对比度</th><th>填充色（≥3）</th><th>对比度</th><th>浅底 tint</th><th>文字 on tint</th></tr></thead>
+    <tbody>
+      <tr><td>达标 / 摄入 / 可行动</td><td><span class="swatch" style="background:#06794C"></span><code>#06794C</code></td><td class="num">5.46:1</td><td><span class="swatch" style="background:#06794C"></span><code>#06794C</code></td><td class="num">5.46:1</td><td><span class="swatch" style="background:#DEF3E7"></span><code>#DEF3E7</code></td><td class="num">4.70:1</td></tr>
+      <tr><td>注意 / 未计热量 / 超标</td><td><span class="swatch" style="background:#8A5A00"></span><code>#8A5A00</code></td><td class="num">5.93:1</td><td><span class="swatch" style="background:#B8791C"></span><code>#B8791C</code></td><td class="num">3.63:1</td><td><span class="swatch" style="background:#FFF4DC"></span><code>#FFF4DC</code></td><td class="num">5.43:1</td></tr>
+      <tr><td>严重超标 / 删除</td><td><span class="swatch" style="background:#A8322A"></span><code>#A8322A</code></td><td class="num">6.66:1</td><td><span class="swatch" style="background:#D04538"></span><code>#D04538</code></td><td class="num">4.57:1</td><td><span class="swatch" style="background:#FDECEA"></span><code>#FDECEA</code></td><td class="num">5.82:1</td></tr>
+      <tr><td>运动消耗 / 数据</td><td><span class="swatch" style="background:#2A6A9E"></span><code>#2A6A9E</code></td><td class="num">5.75:1</td><td><span class="swatch" style="background:#3D8BC9"></span><code>#3D8BC9</code></td><td class="num">3.66:1</td><td><span class="swatch" style="background:#E5F0FA"></span><code>#E5F0FA</code></td><td class="num">4.97:1</td></tr>
+    </tbody>
+  </table>
+
+  <h3>字阶 · 间距 · 圆角 · 动效</h3>
+  <div class="grid g2">
+    <div class="card">
+      <h4>字阶（px / 对应 rpx = ×2）</h4>
+      <table class="tbl" style="margin:0">
+        <tbody>
+          <tr><td><code>--t-display</code></td><td>34 / 700 / -0.03em</td><td>页面大标题</td></tr>
+          <tr><td><code>--t-numb</code></td><td>46 / 750 / -0.04em</td><td>主数字（体重）</td></tr>
+          <tr><td><code>--t-h2</code></td><td>22 / 700 / -0.02em</td><td>次级页标题</td></tr>
+          <tr><td><code>--t-h3</code></td><td>17 / 650 / -0.01em</td><td>卡片标题</td></tr>
+          <tr><td><code>--t-body</code></td><td>15 / 400 / 1.6</td><td>正文</td></tr>
+          <tr><td><code>--t-sm</code></td><td>13.5 / 400</td><td>列表、次要正文</td></tr>
+          <tr><td><code>--t-cap</code></td><td>12 / 500</td><td>标签、单位</td></tr>
+          <tr><td><code>--t-micro</code></td><td>10.5 / 600</td><td>徽标、tabbar</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px;font-size:13px">所有数字类字重统一启用 <code>font-variant-numeric: tabular-nums</code>。</p>
+    </div>
+    <div class="card">
+      <h4>间距 · 4pt 网格</h4>
+      <table class="tbl" style="margin:0 0 12px">
+        <tbody>
+          <tr><td><code>--s-1</code> 4</td><td><code>--s-2</code> 8</td><td><code>--s-3</code> 12</td><td><code>--s-4</code> 16</td></tr>
+          <tr><td><code>--s-5</code> 20</td><td><code>--s-6</code> 24</td><td><code>--s-8</code> 32</td><td><code>--s-10</code> 40</td></tr>
+          <tr><td><code>--s-12</code> 48</td><td><code>--s-16</code> 64</td><td colspan="2">卡片内边距 20 · 卡片间距 16 · 页面边距 14</td></tr>
+        </tbody>
+      </table>
+      <h4>圆角</h4>
+      <table class="tbl" style="margin:0 0 12px">
+        <tbody>
+          <tr><td><code>--r-xs</code> 6</td><td>小标签</td><td><code>--r-md</code> 12</td><td>按钮 / 输入框</td></tr>
+          <tr><td><code>--r-sm</code> 8</td><td>提示条</td><td><code>--r-lg</code> 16</td><td>卡片</td></tr>
+          <tr><td><code>--r-xl</code> 20</td><td>弹层</td><td><code>--r-pill</code> 999</td><td>胶囊 / 开关</td></tr>
+        </tbody>
+      </table>
+      <h4>动效</h4>
+      <table class="tbl" style="margin:0">
+        <tbody>
+          <tr><td><code>--e-out</code></td><td colspan="3">cubic-bezier(.22,1,.36,1) 出场（默认）</td></tr>
+          <tr><td><code>--d-fast</code> 140ms</td><td>按压反馈</td><td><code>--d-base</code> 240ms</td><td>状态切换</td></tr>
+          <tr><td><code>--d-slow</code> 420ms</td><td colspan="3">进度条 / 环形填充</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px;font-size:13px">
+        只对 <code>transform</code> / <code>opacity</code> 做动画。注意：uni-app 小程序端<b>不支持</b>对动态 style 的 height 做 transition，
+        进度类动画请用 CSS 变量或 rAF 实现。
+      </p>
+    </div>
+  </div>
+
+  <h3>令牌源码</h3>
+<pre><b>:root</b>{
+  --bg:#F6F8F7;  --surface:#FFFFFF; --surface-2:#EEF2F0;
+  --line:#E1E8E4; --line-strong:#CBD6CF;
+  --ink-1:#0F2419; --ink-2:#3D5A4C; --ink-3:#5A7568;
+  --brand:#06794C; --brand-press:#046A43; --brand-tint:#DEF3E7;
+  --grad-brand:linear-gradient(135deg,#078157 0%,#04603B 100%);
+  --amber:#8A5A00; --amber-fill:#B8791C; --amber-tint:#FFF4DC;
+  --red:#A8322A;  --red-fill:#D04538;   --red-tint:#FDECEA;
+  --blue:#2A6A9E; --blue-fill:#3D8BC9;  --blue-tint:#E5F0FA;
+
+  --s-1:4px;  --s-2:8px;  --s-3:12px; --s-4:16px; --s-5:20px; --s-6:24px;
+  --s-8:32px; --s-10:40px; --s-12:48px; --s-16:64px;
+  --r-xs:6px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px; --r-pill:999px;
+  --sh-1:0 1px 2px rgba(15,36,25,.04);
+  --sh-2:0 2px 8px rgba(15,36,25,.06);
+  --sh-3:0 8px 24px rgba(15,36,25,.10);
+  --e-out:cubic-bezier(.22,1,.36,1);
+  --d-fast:140ms; --d-base:240ms; --d-slow:420ms;
+}
+<b>[data-theme="dark"]</b>{
+  --bg:#0E1512; --surface:#16211C; --surface-2:#1D2A24;
+  --line:#26332C; --line-strong:#33453B;
+  --ink-1:#E8EFEA; --ink-2:#A9BDB2; --ink-3:#87998F;
+  --brand:#4ECB8B; --brand-press:#3FB47A; --brand-tint:#14372A;
+  --on-brand:#0E1512;
+}</pre>
+</section>
+
+<!-- ============ §4 组件 ============ -->
+<section id="s4">
+  <p class="eyebrow">05 · Components</p>
+  <h2>组件库</h2>
+  <p class="lead">下面这些都是真渲染出来的组件，不是图片。切换右上角的深色模式可以直接看另一套令牌下的效果。</p>
+
+  <h3>按钮</h3>
+  <div class="stage">
+    <button class="btn btn-primary" type="button">保存记录</button>
+    <button class="btn btn-soft" type="button">去设置</button>
+    <button class="btn btn-ghost" type="button">取消</button>
+    <button class="btn btn-primary btn-sm" type="button">小尺寸</button>
+    <button class="btn btn-primary" type="button" disabled>已保存</button>
+  </div>
+  <p style="font-size:13.5px;margin-top:12px">
+    三种层级：主按钮（每屏最多一个）、次级（浅底同色）、幽灵（取消/次要）。
+    最小高度 <b>44px</b>（小程序 88rpx）满足触摸目标要求；按压反馈用 <code>transform:scale(.97)</code> 而非改背景色，成本更低。
+  </p>
+
+  <h3>表单</h3>
+  <div class="stage dark-peek">
+    <div class="field"><label for="d1">体重（kg）</label><input class="input" id="d1" type="text" value="64.8" /></div>
+    <div class="field"><label for="d2">体脂率 %（选填）</label><input class="input" id="d2" type="text" placeholder="选填，不填也能保存" /></div>
+  </div>
+  <p style="font-size:13.5px;margin-top:12px">
+    标签永远可见（不用占位符代替标签）。选填项在标签里直接标「选填」，降低填写压力。
+    聚焦态用 3px 品牌色外环，不用 <code>outline</code>——小程序的 outline 表现不一致。
+  </p>
+
+  <h3>分段控件 · 标签 · 开关</h3>
+  <div class="stage">
+    <div class="seg"><button type="button" class="on">体重</button><button type="button">饮食</button><button type="button">运动</button></div>
+    <span class="pill g">BMI 22.4 · 正常</span>
+    <span class="pill a">2 条未计热量</span>
+    <span class="pill r">超标 120</span>
+    <span class="pill b">体脂 18.2%</span>
+    <span class="pill n">未设置</span>
+    <div class="toggle on"><i></i></div>
+    <div class="toggle"><i></i></div>
+  </div>
+
+  <h3>进度 · 空状态</h3>
+  <div class="stage dark-peek" style="flex-direction:column; align-items:stretch">
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-3);margin-bottom:7px">
+        <span>起始 68.0 kg</span><span style="color:var(--brand);font-weight:700">已完成 53%</span><span>目标 62.0 kg</span>
+      </div>
+      <div class="track"><i style="width:53%"></i></div>
+    </div>
+    <div class="empty" style="border:1px dashed var(--line-strong); border-radius:var(--r-lg)">
+      <div class="ic">📈</div>
+      <div class="t">还没有足够的体重记录</div>
+      <div class="s">连续记录 3 天以上，这里就能看出趋势了</div>
+      <button class="btn btn-primary btn-sm" type="button" style="margin-top:16px">去记录体重</button>
+    </div>
+  </div>
+  <p style="font-size:13.5px;margin-top:12px">
+    空状态必须带一个出口按钮——只说「没有数据」是死路。
+  </p>
+</section>
+
+<!-- ============ §5 布局系统 ============ -->
+<section id="s5">
+  <p class="eyebrow">06 · Layout</p>
+  <h2>布局系统</h2>
+  <p class="lead">
+    配色解决的是「看不看得清」，布局解决的是「找不找得到」。这一节处理三件事：
+    把关键数据拉进首屏、把零散的间距收进 4pt 网格、给每张图表补上能真正读数的参照。
+  </p>
+
+  <h3>布局审计</h3>
+  <table class="tbl">
+    <thead><tr><th>屏幕</th><th>问题</th><th>为什么是问题</th><th>解法</th></tr></thead>
+    <tbody>
+      <tr><td>今天</td><td>热量卡排在体重卡之后，要滑到 331px 才出现</td><td>热量一天要查好几次，体重一天只称一次——顺序反了</td><td>对调顺序，<b>行动频率决定位置</b></td></tr>
+      <tr><td>今天</td><td>体重卡纵向堆叠：46px 数字 + 独立进度条区</td><td>一张卡吃掉 200px，首屏装不下两块内容</td><td>数字 46→32px，进度条并入同区，<b>200→145px</b></td></tr>
+      <tr><td>今天</td><td>三大营养素用三条进度条，各自以三者最大值为分母</td><td>比例无意义——碳水永远 100%，蛋白质永远看着偏低</td><td>改成一条按<b>供能比</b>（×4/×4/×9）的分段条</td></tr>
+      <tr><td>今天</td><td>本周打卡用 <code>space-between</code></td><td>7 格不等宽，最后一格贴死右边缘，视觉失衡</td><td>改 <code>grid-template-columns:repeat(7,1fr)</code></td></tr>
+      <tr><td>记录</td><td>分段控件与日期栏纵向堆叠</td><td>占掉 110px，表单被推到第二屏才露出来</td><td>分段控件 <b>sticky 吸顶</b>，日期栏压成单行药丸</td></tr>
+      <tr><td>记录</td><td>字段间距 14px、16px、6px 混用</td><td>节奏断裂，说不出规律，改一处动全身</td><td>标签 6px / 字段 12px / 区块 20px，只此三档</td></tr>
+      <tr><td>记录</td><td>删除是贴边的文字按钮</td><td>与体重数值挤在同一行，误触成本高</td><td>32px 图标块 + <code>::after</code> 把热区悄悄扩到 44px</td></tr>
+      <tr><td>趋势</td><td>范围切换是独占一行的三个大卡片</td><td>占 60px，视觉权重还压过了图表本身</td><td>改成标题行右侧的紧凑药丸</td></tr>
+      <tr><td>趋势</td><td>图例与卡片标题同行</td><td>375px 宽下「标题 + 两个图例」必然会挤</td><td>图例移到图表<b>下方居中</b></td></tr>
+      <tr><td>趋势</td><td>柱状图只有相对高度，没有刻度</td><td>2210 和 1000 看起来一样高，读不出绝对值</td><td>加 y 轴刻度 + 一条「预算 1962」虚线基线</td></tr>
+      <tr><td>我的</td><td>头像区居中大留白</td><td>170px 只放了昵称和一行统计，密度极低</td><td>改横向排布，<b>170→96px</b></td></tr>
+      <tr><td>我的</td><td>菜单分成 3 张卡，但分组没有含义</td><td>卡片边界看不出逻辑，用户只能逐行扫</td><td>加组标题，7 项归为 2 组</td></tr>
+      <tr><td>全局</td><td>间距散落着 6/10/14/18/22/26/30rpx</td><td>全部不在 4pt 网格上，没有任何一个是 8 的倍数</td><td>收到 8rpx 倍数，只留 7 个尺度</td></tr>
+      <tr><td>全局</td><td>数字容器没有最小宽度</td><td>三位体重、五位数热量会挤压相邻元素甚至换行</td><td><code>tabular-nums</code> + 长文本 <code>ellipsis</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>统一空间尺度</h3>
+  <p>整个应用只用下面 8 个值。删掉其它一切数字，改版时才有底气。</p>
+  <table class="tbl">
+    <thead><tr><th>令牌</th><th>px / rpx</th><th>用在哪</th><th>令牌</th><th>px / rpx</th><th>用在哪</th></tr></thead>
+    <tbody>
+      <tr><td><code>--pad-x</code></td><td>16 / 32</td><td>页面左右边距</td><td><code>--gap-label</code></td><td>6 / 12</td><td>标签 → 输入框</td></tr>
+      <tr><td><code>--gap-card</code></td><td>12 / 24</td><td>卡片与卡片之间</td><td><code>--gap-item</code></td><td>8 / 16</td><td>列表项之间</td></tr>
+      <tr><td><code>--pad-card</code></td><td>16 / 32</td><td>卡片内边距</td><td><code>--gap-inline</code></td><td>4 / 8</td><td>图标与文字之间</td></tr>
+      <tr><td><code>--gap-block</code></td><td>20 / 40</td><td>卡内区块（分隔线上下）</td><td><code>--hit-min</code></td><td>44 / 88</td><td>最小触摸目标</td></tr>
+    </tbody>
+  </table>
+
+  <h3>首屏预算：575px</h3>
+  <p>
+    按最窄的主流机型 iPhone SE（375×667）算：减去状态栏 44px 和 tabbar 约 48px，
+    <b>真正可见的高度只有 575px</b>。用它当预算线，而不是按 iPhone 15 的 800px 来设计——
+    否则小屏用户永远看不到重点。下面两张图按 1:4 缩放，虚线是首屏线。
+  </p>
+  <div class="grid g2">
+    <div class="card">
+      <h4>v3 · 首屏只装得下两块，任务卡完全在屏外</h4>
+      <div class="vstack">
+        <div class="vseg" style="height:33px">头部 + 问候　131</div>
+        <div class="vseg s-w" style="height:46px">体重卡　186</div>
+        <div class="vseg s-a" style="height:61px">热量卡　244</div>
+        <div class="vseg s-t" style="height:52px">今日任务　208</div>
+        <div class="vseg s-w" style="height:45px">本周打卡　181</div>
+        <div class="fold" style="top:144px"><span>首屏线 575</span></div>
+      </div>
+      <p style="margin:12px 0 0">热量卡底边正好压线，任务卡一行都看不到。</p>
+    </div>
+    <div class="card" style="border-color:var(--brand)">
+      <h4>v3.1 · 热量 + 体重完整可见，任务卡露出约两行</h4>
+      <div class="vstack">
+        <div class="vseg" style="height:33px">头部 + 问候　131</div>
+        <div class="vseg s-a" style="height:52px">热量卡　197</div>
+        <div class="vseg s-w" style="height:40px">体重卡　146</div>
+        <div class="vseg s-t" style="height:48px">今日任务　182</div>
+        <div class="vseg s-w" style="height:45px">本周打卡　181</div>
+        <div class="fold" style="top:144px"><span>首屏线 575</span></div>
+      </div>
+      <p style="margin:12px 0 0">对调顺序 + 压缩体重卡，两块高频数据全部落进首屏。</p>
+    </div>
+  </div>
+
+  <h3>六条布局规则</h3>
+  <div class="grid g3">
+    <div class="card"><div class="k">01</div><p class="t">首屏预算 575px</p><p>按最窄主流机型倒推，不是按最大机型。最高频的两个数据块必须完整落进这条线内。</p></div>
+    <div class="card"><div class="k">02</div><p class="t">一屏一个视觉重心</p><p>记录页的重心是体重输入框（56px 高、24px 字），其余字段一律常规尺寸。处处强调等于没有强调。</p></div>
+    <div class="card"><div class="k">03</div><p class="t">等分用 grid，不用 space-between</p><p>凡是「N 等分」的横向排列（7 天打卡、三宫格指标）一律 <code>repeat(N,1fr)</code>。space-between 会让首尾贴边。</p></div>
+    <div class="card"><div class="k">04</div><p class="t">手感与视觉解耦</p><p>紧凑控件（30px 药丸、32px 删除块）用 <code>::after{inset:-7px}</code> 把热区补到 44px。看着精致，按着舒服。</p></div>
+    <div class="card"><div class="k">05</div><p class="t">每张图都有数值参照</p><p>没有刻度的柱状图只能比较高低、读不出大小。y 轴刻度 + 一条预算基线，成本极低，信息量翻倍。</p></div>
+    <div class="card"><div class="k">06</div><p class="t">长文本省略，数字等宽</p><p>所有可能变长的文本加 <code>ellipsis</code>；所有数字加 <code>tabular-nums</code>，避免刷新时数字跳动。</p></div>
+  </div>
+</section>
+
+<!-- ============ §6 六屏 ============ -->
+<section id="s6">
+  <p class="eyebrow">07 · Screens</p>
+  <h2>六屏高保真设计</h2>
+  <p class="lead">375 × 812（iPhone X 基准），布局按 375 × 667 的首屏预算验证。所有元素使用上文的令牌与空间尺度，切到深色模式可整体验证。</p>
+
+  <div class="phones">
+
+    <!-- ---------- 今天 ---------- -->
+    <div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="pbar"><span>9:41</span><span>●●● WiFi ▮</span></div>
+          <div class="p-head" style="padding-top:26px">
+            <span style="font-size:12.5px;color:var(--ink-3);font-weight:600">9月4日 周五</span>
+            <svg width="19" height="19" style="color:var(--ink-2)"><use href="#i-bell"/></svg>
+          </div>
+          <div class="p-greet">
+            <div class="hi">早上好，小明</div>
+            <div class="dt"><span class="streak">🔥 已连续记录 12 天</span><span>· 别断在今天</span></div>
+          </div>
+
+          <!-- 今日热量 · 提到首位：每天要查好几次的决策数据 -->
+          <div class="p-card">
+            <div class="p-card-h">
+              <span class="p-card-t amber">今日热量</span>
+              <span class="pill a">2 条未计热量</span>
+            </div>
+            <div class="cal">
+              <svg width="84" height="84" viewBox="0 0 84 84">
+                <defs>
+                  <linearGradient id="ringg" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#078157"/><stop offset="100%" stop-color="#04603B"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="42" cy="42" r="35" fill="none" stroke="var(--surface-2)" stroke-width="10"/>
+                <circle cx="42" cy="42" r="35" fill="none" stroke="url(#ringg)" stroke-width="10"
+                        stroke-linecap="round" stroke-dasharray="125.3 219.9" transform="rotate(-90 42 42)"/>
+                <text x="42" y="41" text-anchor="middle" font-size="21" font-weight="750"
+                      fill="var(--ink-1)" letter-spacing="-1">842</text>
+                <text x="42" y="54" text-anchor="middle" font-size="9" fill="var(--ink-3)">还可摄入</text>
+              </svg>
+              <div class="klist">
+                <div class="r"><span><i class="kdot" style="background:var(--brand)"></i>摄入</span><b>1120</b></div>
+                <div class="r"><span><i class="kdot" style="background:var(--blue-fill)"></i>消耗</span><b>320</b></div>
+                <div class="r"><span><i class="kdot" style="background:var(--line-strong)"></i>预算</span><b>1962</b></div>
+              </div>
+            </div>
+            <div class="mbar">
+              <i style="width:23.3%;background:var(--brand)"></i>
+              <i style="width:45.2%;background:var(--amber-fill)"></i>
+              <i style="width:31.5%;background:var(--blue-fill)"></i>
+            </div>
+            <div class="mlegend">
+              <span><i style="background:var(--brand)"></i>蛋白 <b>68g</b></span>
+              <span><i style="background:var(--amber-fill)"></i>碳水 <b>132g</b></span>
+              <span><i style="background:var(--blue-fill)"></i>脂肪 <b>41g</b></span>
+            </div>
+          </div>
+
+          <!-- 体重 · 降到第二位，由纵向改横向，高度 200→145 -->
+          <div class="p-card">
+            <div class="p-card-h">
+              <span class="p-card-t">体重</span>
+              <span class="pill g">BMI 22.4 · 正常</span>
+            </div>
+            <div class="wline">
+              <span class="big">64.8<span class="u">kg</span></span>
+              <span class="gapv">距目标 2.8 kg</span>
+            </div>
+            <div style="margin-top:16px">
+              <div class="track"><i style="width:53%"></i></div>
+              <div class="wends"><span>起始 68.0</span><span style="color:var(--brand);font-weight:700">53%</span><span>目标 62.0</span></div>
+            </div>
+          </div>
+
+          <!-- 任务 -->
+          <div class="p-card">
+            <div class="p-card-h"><span class="p-card-t">今日任务</span><span class="p-meta">2/3 已完成</span></div>
+            <div class="tasks">
+              <div class="task"><div class="tbox on"><svg width="13" height="13"><use href="#i-check"/></svg></div><span class="ttext on">记录今天的体重</span></div>
+              <div class="task"><div class="tbox on"><svg width="13" height="13"><use href="#i-check"/></svg></div><span class="ttext on">记录今天吃了什么</span></div>
+              <div class="task"><div class="tbox"><svg width="13" height="13"><use href="#i-check"/></svg></div><span class="ttext">动一动，记录运动</span><span class="tgo">去记录</span></div>
+            </div>
+          </div>
+
+          <!-- 本周 -->
+          <div class="p-card">
+            <div class="p-card-h"><span class="p-card-t blue">本周打卡</span></div>
+            <div class="week grid7">
+              <div class="wd"><span class="l">一</span><div class="b on"><svg width="13" height="13"><use href="#i-check"/></svg></div></div>
+              <div class="wd"><span class="l">二</span><div class="b on"><svg width="13" height="13"><use href="#i-check"/></svg></div></div>
+              <div class="wd"><span class="l">三</span><div class="b"><svg width="13" height="13"><use href="#i-check"/></svg></div></div>
+              <div class="wd"><span class="l on">四</span><div class="b on"><svg width="13" height="13"><use href="#i-check"/></svg></div></div>
+              <div class="wd"><span class="l">五</span><div class="b on"><svg width="13" height="13"><use href="#i-check"/></svg></div></div>
+              <div class="wd"><span class="l">六</span><div class="b on"><svg width="13" height="13"><use href="#i-check"/></svg></div></div>
+              <div class="wd"><span class="l">日</span><div class="b"><svg width="13" height="13"><use href="#i-check"/></svg></div></div>
+            </div>
+            <div class="wsum">近 7 天记录了 <b>5</b> 天，体重变化 <b>-0.42 kg/周</b><br />保持这个节奏，预计 10 月中旬达成目标</div>
+          </div>
+
+          <div class="disclaim">本工具仅用于个人数据记录，食物热量为估算值，不构成医疗建议</div>
+
+          <div class="tabbar">
+            <button class="tab on" type="button"><svg><use href="#i-today"/></svg>今天</button>
+            <button class="tab" type="button"><svg><use href="#i-record"/></svg>记录</button>
+            <button class="tab" type="button"><svg><use href="#i-trend"/></svg>趋势</button>
+            <button class="tab" type="button"><svg><use href="#i-profile"/></svg>我的</button>
+          </div>
+        </div>
+      </div>
+      <p class="pnote"><b>01 今天</b>　<b>调序</b>：热量卡提到体重卡之前——体重一天只称一次，热量一天要查好几次，行动频率决定顺序。<b>压缩</b>：体重卡由纵向改横向（数字 46→32px，进度条并入同区），高度 200→145px。<b>合并</b>：三大营养素从三条各自为政的进度条，改成一条按供能比（蛋白×4 / 碳水×4 / 脂肪×9）的分段条——原来每条以三者最大值为分母，比例没有意义。<b>等分</b>：本周打卡从 space-between 改 7 等分 grid，消除末格贴边。
+      <br /><br />结果：首屏（按 iPhone SE 最窄的 580px 可见高度算）能看到完整的热量卡和体重卡，而不必滚动。</p>
+    </div>
+
+    <!-- ---------- 记录 ---------- -->
+    <div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="pbar"><span>9:41</span><span>●●● WiFi ▮</span></div>
+          <div class="p-head" style="padding-top:26px; padding-bottom:4px">
+            <span style="font-size:22px;font-weight:700;letter-spacing:-.02em;color:var(--ink-1)">记录</span>
+            <span class="p-meta">共 12 条</span>
+          </div>
+          <div style="padding:8px 16px 12px; position:sticky; top:0; z-index:4; background:var(--bg)">
+            <div class="seg" style="display:flex">
+              <button type="button" class="on" style="flex:1">体重</button>
+              <button type="button" style="flex:1">饮食</button>
+              <button type="button" style="flex:1">运动</button>
+            </div>
+          </div>
+          <div class="datepill">
+            <div class="arrow dim">‹</div>
+            <div class="mid"><div class="t">今天</div><div class="s">2026 / 09 / 04 周五</div></div>
+            <div class="arrow dim">›</div>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-h"><span class="p-card-t">记录体重</span><span class="p-meta">同日重复记录会覆盖</span></div>
+            <div class="field">
+              <label>体重（kg）</label>
+              <div style="position:relative">
+                <input class="input" type="text" value="64.8"
+                       style="font-size:24px;font-weight:700;letter-spacing:-.03em;padding-right:46px;min-height:56px" />
+                <span style="position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--ink-3);font-weight:600">kg</span>
+              </div>
+            </div>
+            <div class="g2f">
+              <div class="field"><label>体脂率 %（选填）</label><input class="input" type="text" placeholder="--" /></div>
+              <div class="field"><label>腰围 cm（选填）</label><input class="input" type="text" placeholder="--" /></div>
+            </div>
+            <div class="field"><label>备注（选填）</label><input class="input" type="text" placeholder="今天状态如何" /></div>
+            <button class="btn btn-primary" type="button" style="width:100%">保存体重</button>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-h"><span class="p-card-t">最近记录</span><span class="p-meta">左滑可删除</span></div>
+            <div class="rec"><div class="d"><div class="a">09/04</div><div class="b">2026</div></div>
+              <div class="n">64.8 <span style="font-size:11px;color:var(--ink-3);font-weight:600">kg</span></div>
+              <span class="pill b">体脂 18.2%</span>
+              <span class="del"><svg width="15" height="15"><use href="#i-trash"/></svg></span></div>
+            <div class="rec"><div class="d"><div class="a">09/03</div><div class="b">2026</div></div>
+              <div class="n">65.1 <span style="font-size:11px;color:var(--ink-3);font-weight:600">kg</span></div>
+              <span class="pill b">体脂 18.4%</span>
+              <span class="del"><svg width="15" height="15"><use href="#i-trash"/></svg></span></div>
+            <div class="rec"><div class="d"><div class="a">09/02</div><div class="b">2026</div></div>
+              <div class="n">65.5 <span style="font-size:11px;color:var(--ink-3);font-weight:600">kg</span></div>
+              <span class="pill n">未填体脂</span>
+              <span class="del"><svg width="15" height="15"><use href="#i-trash"/></svg></span></div>
+            <div class="rec"><div class="d"><div class="a">09/01</div><div class="b">2026</div></div>
+              <div class="n">65.6 <span style="font-size:11px;color:var(--ink-3);font-weight:600">kg</span></div>
+              <span class="pill b">体脂 18.9%</span>
+              <span class="del"><svg width="15" height="15"><use href="#i-trash"/></svg></span></div>
+          </div>
+          <div class="safearea"></div>
+          <div class="tabbar">
+            <button class="tab" type="button"><svg><use href="#i-today"/></svg>今天</button>
+            <button class="tab on" type="button"><svg><use href="#i-record"/></svg>记录</button>
+            <button class="tab" type="button"><svg><use href="#i-trend"/></svg>趋势</button>
+            <button class="tab" type="button"><svg><use href="#i-profile"/></svg>我的</button>
+          </div>
+        </div>
+      </div>
+      <p class="pnote"><b>02 记录</b>　<b>省高度</b>：分段控件改 sticky 吸顶，日期栏从两行压成单行药丸，为表单让出约 40px。<b>强焦点</b>：体重输入框加高到 56px、字号 24px，是全屏唯一的视觉重心；体脂/腰围双列并排（<code>.g2f</code>），把三个字段占的高度压成两行。<b>统一节奏</b>：标签→输入框固定 6px，字段之间固定 12px，去掉原来的 14px/16px 混用。<b>防误触</b>：删除从贴边的文字改成 32px 图标块，并用 <code>::after</code> 把热区悄悄扩到 44px——视觉紧凑，手指好按。</p>
+    </div>
+
+    <!-- ---------- 趋势 ---------- -->
+    <div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="pbar"><span>9:41</span><span>●●● WiFi ▮</span></div>
+          <div class="p-head" style="padding-top:26px; padding-bottom:12px">
+            <span style="font-size:22px;font-weight:700;letter-spacing:-.02em;color:var(--ink-1)">趋势</span>
+            <div class="rangepill">
+              <button type="button">7</button><button type="button" class="on">30</button><button type="button">90</button>
+            </div>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-h"><span class="p-card-t">体重趋势</span><span class="p-meta">近 30 天</span></div>
+            <div class="ywrap">
+              <span class="ylab" style="top:0">66.5</span>
+              <span class="ylab" style="top:70px">65.5</span>
+              <span class="ylab" style="top:140px">64.5</span>
+              <svg viewBox="0 0 279 140" width="100%" height="140">
+                <g stroke="var(--line)" stroke-width="1">
+                  <line x1="0" y1="0" x2="279" y2="0"/><line x1="0" y1="70" x2="279" y2="70"/>
+                  <line x1="0" y1="140" x2="279" y2="140"/>
+                </g>
+                <path d="M4 38 L50 44 L96 52 L142 62 L188 72 L234 86 L275 100"
+                      fill="none" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="4 4" opacity=".75"/>
+                <path d="M4 35 L50 45 L96 55 L142 65 L188 70 L234 90 L275 105"
+                      fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <g fill="var(--brand)">
+                  <circle cx="4" cy="35" r="3"/><circle cx="50" cy="45" r="3"/><circle cx="96" cy="55" r="3"/>
+                  <circle cx="142" cy="65" r="3"/><circle cx="188" cy="70" r="3"/><circle cx="234" cy="90" r="3"/>
+                  <circle cx="275" cy="105" r="4.4" stroke="var(--surface)" stroke-width="2"/>
+                </g>
+              </svg>
+            </div>
+            <div class="wends" style="margin-top:8px"><span>08/06</span><span>09/04</span></div>
+            <div class="chartlegend">
+              <span><i style="background:var(--brand)"></i>实测</span>
+              <span><i class="dash"></i>7 日均线</span>
+            </div>
+            <div class="mets">
+              <div class="met"><div class="v down">-1.4</div><div class="l">区间变化 kg</div></div>
+              <div class="met"><div class="v down">-0.42</div><div class="l">周均变化 kg</div></div>
+              <div class="met"><div class="v">22</div><div class="l">记录天数</div></div>
+            </div>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-h"><span class="p-card-t amber">热量收支</span><span class="p-meta">近 14 天</span></div>
+            <div class="ywrap" style="padding-left:34px">
+              <span class="ylab" style="top:0">2210</span>
+              <span class="ylab" style="top:96px">0</span>
+              <div style="position:relative">
+                <div class="ybase" style="top:11px"></div>
+                <div class="bars">
+                  <div class="bcol"><i class="bin" style="height:36px"></i><i class="bout" style="height:6px"></i></div>
+                  <div class="bcol"><i class="bin" style="height:33px"></i><i class="bout" style="height:6px"></i></div>
+                  <div class="bcol"><i class="bin" style="height:42px"></i><i class="bout" style="height:9px"></i></div>
+                  <div class="bcol"><i class="bin" style="height:35px"></i><i class="bout" style="height:6px"></i></div>
+                  <div class="bcol"><i class="bin" style="height:31px"></i><i class="bout" style="height:0"></i></div>
+                  <div class="bcol"><i class="bin" style="height:39px"></i><i class="bout" style="height:8px"></i></div>
+                  <div class="bcol"><i class="bin" style="height:32px"></i><i class="bout" style="height:5px"></i></div>
+                  <div class="bcol"><i class="bin" style="height:44px"></i><i class="bout" style="height:10px"></i></div>
+                  <div class="bcol"><i class="bin" style="height:34px"></i><i class="bout" style="height:7px"></i></div>
+                  <div class="bcol"><i class="bin" style="height:31px"></i><i class="bout" style="height:4px"></i></div>
+                  <div class="bcol"><i class="bin" style="height:37px"></i><i class="bout" style="height:8px"></i></div>
+                  <div class="bcol"><i class="bin" style="height:40px"></i><i class="bout" style="height:6px"></i></div>
+                  <div class="bcol"><i class="bin" style="height:32px"></i><i class="bout" style="height:5px"></i></div>
+                  <div class="bcol"><i class="bin" style="height:22px"></i><i class="bout" style="height:6px"></i></div>
+                </div>
+              </div>
+            </div>
+            <div class="baxis"><span>08/22</span><span>09/04</span></div>
+            <div class="chartlegend">
+              <span><i style="background:var(--brand);width:8px;height:8px;border-radius:2px"></i>摄入</span>
+              <span><i style="background:var(--blue-fill);width:8px;height:8px;border-radius:2px"></i>消耗</span>
+              <span><i class="dash" style="width:12px"></i>预算 1962</span>
+            </div>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-h"><span class="p-card-t blue">阶段分析</span><span class="p-meta">本地计算</span></div>
+            <div class="score">
+              <svg width="56" height="56" viewBox="0 0 56 56">
+                <circle cx="28" cy="28" r="23" fill="none" stroke="var(--surface-2)" stroke-width="6"/>
+                <circle cx="28" cy="28" r="23" fill="none" stroke="var(--brand)" stroke-width="6"
+                        stroke-linecap="round" stroke-dasharray="112.7 144.5" transform="rotate(-90 28 28)"/>
+                <text x="28" y="33" text-anchor="middle" font-size="18" font-weight="750" fill="var(--ink-1)">78</text>
+              </svg>
+              <div class="stage-box"><div class="l">当前阶段</div><div class="v">稳步减脂期</div></div>
+            </div>
+            <div class="blk">
+              <div class="bt"><i class="bi warn">!</i>需要注意</div>
+              <div class="it risk">近 7 天有 3 天热量摄入低于基础代谢，长期如此容易反弹</div>
+              <div class="it risk">蛋白质摄入连续 4 天偏低</div>
+            </div>
+            <div class="blk">
+              <div class="bt"><i class="bi good">✓</i>下一步建议</div>
+              <div class="it tip">把每日热量缺口收窄到 300 千卡左右，速度慢一点但更稳</div>
+              <div class="it tip">运动后补一份蛋白质，目标 90g/天</div>
+            </div>
+          </div>
+
+          <div class="disclaim">数据仅供个人参考，不构成医疗建议</div>
+          <div class="tabbar">
+            <button class="tab" type="button"><svg><use href="#i-today"/></svg>今天</button>
+            <button class="tab" type="button"><svg><use href="#i-record"/></svg>记录</button>
+            <button class="tab on" type="button"><svg><use href="#i-trend"/></svg>趋势</button>
+            <button class="tab" type="button"><svg><use href="#i-profile"/></svg>我的</button>
+          </div>
+        </div>
+      </div>
+      <p class="pnote"><b>03 趋势</b>　<b>让位给图表</b>：范围切换从独占一行的三个大卡片，改成标题行右侧的紧凑药丸，省下约 50px；图例从卡片标题行移到图表下方居中——375px 宽下标题和两个图例挤在一行必然会撞。<b>补上刻度</b>：两张图都加了 y 轴数值，柱状图还多一条虚线标出「预算 1962」，否则只能看相对高低，读不出绝对值。<b>收尺寸</b>：评分环 76→56px，配一个 12px 网格节奏的指标三宫格。
+      <br /><br />渲染上沿用 v2 的两个修复：非零柱保底 4px（避免 <code>min-height</code> 与圆角冲突把 0 值渲染成圆点），动画交给 rAF（小程序不支持对动态 height 做 transition）。</p>
+    </div>
+
+    <!-- ---------- 我的 ---------- -->
+    <div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="pbar"><span>9:41</span><span>●●● WiFi ▮</span></div>
+          <div class="phead2">
+            <div class="av">小</div>
+            <div style="flex:1; min-width:0">
+              <div class="nm">小明</div>
+              <div class="st">累计记录 <b>12</b> 天 · 加入 24 天</div>
+            </div>
+            <span class="chev">›</span>
+          </div>
+
+          <div class="grp">目标与测算</div>
+          <div class="p-card" style="padding:0 16px">
+            <div class="mrow"><div class="mico" style="background:var(--amber-tint)">🎯</div><div class="mtxt"><div class="t">减重目标</div><div class="s">68.0 → 62.0 kg</div></div><span class="pill g" style="margin-right:9px">进行中</span><span class="chev">›</span></div>
+            <div class="mrow"><div class="mico" style="background:var(--blue-tint)">🔥</div><div class="mtxt"><div class="t">我的热量测算</div><div class="s">BMR 1520 · TDEE 1962 千卡</div></div><span class="chev">›</span></div>
+            <div class="mrow"><div class="mico" style="background:var(--brand-tint)">📝</div><div class="mtxt"><div class="t">个人资料</div><div class="s">性别、生日、身高、活动量</div></div><span class="chev">›</span></div>
+          </div>
+
+          <div class="grp">数据与设置</div>
+          <div class="p-card" style="padding:0 16px">
+            <div class="mrow"><div class="mico" style="background:var(--surface-2)">🩺</div><div class="mtxt"><div class="t">我的健康档案</div><div class="s">BMI、体脂率、腰围变化</div></div><span class="chev">›</span></div>
+            <div class="mrow"><div class="mico" style="background:var(--surface-2)">📊</div><div class="mtxt"><div class="t">导出数据（CSV）</div><div class="s">把记录带走，随时可查</div></div><span class="chev">›</span></div>
+            <div class="mrow"><div class="mico" style="background:var(--surface-2)">🔔</div><div class="mtxt"><div class="t">每日记录提醒</div><div class="s">每晚 21:00</div></div><div class="toggle on"><i></i></div></div>
+            <div class="mrow"><div class="mico" style="background:var(--surface-2)">❓</div><div class="mtxt"><div class="t">使用帮助</div></div><span class="chev">›</span></div>
+          </div>
+          <div class="safearea"></div>
+
+          <div class="disclaim">版本 1.0.0 · 数据仅存储于本机与你的服务器</div>
+          <div class="tabbar">
+            <button class="tab" type="button"><svg><use href="#i-today"/></svg>今天</button>
+            <button class="tab" type="button"><svg><use href="#i-record"/></svg>记录</button>
+            <button class="tab" type="button"><svg><use href="#i-trend"/></svg>趋势</button>
+            <button class="tab on" type="button"><svg><use href="#i-profile"/></svg>我的</button>
+          </div>
+        </div>
+      </div>
+      <p class="pnote"><b>04 我的</b>　<b>压缩头部</b>：头像区从「居中大留白」改成横向排布，170px → 96px，同样的信息少占 74px。<b>分组</b>：原来 3 张菜单卡的边界没有含义，现在给出「目标与测算」「数据与设置」两个组标题，7 项归位，并把最高频的「减重目标」提到第一位。<b>补安全区</b>：列表底部加 12px 空白，避免 iPhone 底部横条压住最后一项。
+      <br /><br />头像点击仍走微信原生 <code>open-type="chooseAvatar"</code>，昵称用 <code>input type="nickname"</code>——这两处的原生能力（微信头像缩略图、键盘上方「用微信昵称」快捷填充）自造 UI 复现不了。</p>
+    </div>
+
+    <!-- ---------- 目标 ---------- -->
+    <div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="pbar"><span>9:41</span><span>●●● WiFi ▮</span></div>
+          <div class="p-head" style="padding-top:26px">
+            <span style="font-size:12.5px;color:var(--ink-2);font-weight:600">‹ 返回</span>
+            <span style="font-size:12.5px;color:var(--brand);font-weight:650">保存</span>
+          </div>
+          <div class="p-title">减重目标</div>
+
+          <div class="p-card">
+            <div class="goalrow">
+              <div class="gitem"><div class="gcirc">68.0</div><div class="gl">起始 kg</div></div>
+              <div class="gflow"><div class="ar">→</div><div class="tg">缺口 300 千卡/日</div></div>
+              <div class="gitem"><div class="gcirc target">62.0</div><div class="gl">目标 kg</div></div>
+            </div>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-h"><span class="p-card-t amber">目标设置</span></div>
+            <div class="field">
+              <label>目标体重（kg）</label>
+              <div style="position:relative">
+                <input class="input" type="text" value="62.0" style="font-size:20px;font-weight:700;padding-right:44px" />
+                <span style="position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--ink-3);font-weight:600">kg</span>
+              </div>
+            </div>
+            <div class="field" style="margin-bottom:6px">
+              <label>每日热量缺口（千卡）</label>
+              <div class="seg" style="display:flex">
+                <button type="button" style="flex:1">200</button>
+                <button type="button" class="on" style="flex:1">300</button>
+                <button type="button" style="flex:1">500</button>
+              </div>
+            </div>
+            <p style="font-size:11.5px;color:var(--ink-3);margin:12px 0 0;line-height:1.6">
+              缺口越大掉得越快，但也越难坚持。300 千卡/日对应约每周 0.3 kg，是反弹风险较低的速度。
+            </p>
+          </div>
+
+          <div class="eta">
+            <span class="ic">📅</span>
+            <div><div class="t1">按当前节奏预计达成</div><div class="t2">2026 年 10 月 14 日</div></div>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-h"><span class="p-card-t blue">身体数据</span></div>
+            <div class="g2f">
+              <div class="field"><label>身高（cm）</label><input class="input" type="text" value="170" /></div>
+              <div class="field"><label>当前体重（kg）</label><input class="input" type="text" value="64.8" /></div>
+            </div>
+            <div class="field"><label>日常活动量</label>
+              <div class="seg" style="display:flex">
+                <button type="button" style="flex:1">久坐</button>
+                <button type="button" class="on" style="flex:1">轻度</button>
+                <button type="button" style="flex:1">中度</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="fab-save"><button class="btn btn-primary" type="button">保存目标</button></div>
+          <div class="disclaim">目标可随时修改，改动只影响之后的测算</div>
+        </div>
+      </div>
+      <p class="pnote"><b>05 目标设置</b>　把「每日热量缺口」从数字输入改成三档分段控件——用户不需要理解 TDEE 公式，只需要选「快一点还是稳一点」，每档下方配一句说明代价的文案。<b>布局上</b>：起始/目标两个圆环与中间的缺口标签合并进一张卡，不再与下面的表单争夺视觉重量；身高与当前体重用 <code>.g2f</code> 双列并排，把三段表单压成两行。</p>
+    </div>
+
+    <!-- ---------- 自定义食物 ---------- -->
+    <div>
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="pbar"><span>9:41</span><span>●●● WiFi ▮</span></div>
+          <div class="p-head" style="padding-top:26px">
+            <span style="font-size:12.5px;color:var(--ink-2);font-weight:600">‹ 返回</span>
+            <span style="font-size:12.5px;color:var(--brand);font-weight:650">保存</span>
+          </div>
+          <div class="p-title">自定义食物</div>
+
+          <div class="p-card">
+            <div class="p-card-h"><span class="p-card-t">基本信息</span></div>
+            <div class="field"><label>食物名称</label><input class="input" type="text" placeholder="例如 妈妈做的红烧肉" /></div>
+            <div class="field"><label>份量描述</label><input class="input" type="text" placeholder="例如 1 碗 / 100g" /></div>
+            <div class="field">
+              <label>热量（千卡）</label>
+              <div style="position:relative">
+                <input class="input" type="text" value="320" style="font-size:24px;font-weight:700;letter-spacing:-.03em;padding-right:52px;min-height:56px" />
+                <span style="position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--ink-3);font-weight:600">kcal</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-card">
+            <div class="p-card-h"><span class="p-card-t amber">营养素（选填）</span><span class="p-meta">填了才能算配比</span></div>
+            <div class="g2f">
+              <div class="field"><label>蛋白质 g</label><input class="input" type="text" placeholder="--" /></div>
+              <div class="field"><label>碳水 g</label><input class="input" type="text" placeholder="--" /></div>
+            </div>
+            <div class="field"><label>脂肪 g</label><input class="input" type="text" placeholder="--" /></div>
+          </div>
+
+          <div class="eta">
+            <span class="ic">💡</span>
+            <div><div class="t1">小提示</div><div class="t2" style="font-size:12.5px;font-weight:500;color:var(--ink-2);line-height:1.55">
+              记不准没关系。填个大概的热量，比因为估不准而干脆不记要好得多。</div></div>
+          </div>
+
+          <div class="fab-save"><button class="btn btn-primary" type="button">保存并选用</button></div>
+          <div class="disclaim">自定义食物会加入你的个人食物库，下次可直接搜索</div>
+        </div>
+      </div>
+      <p class="pnote"><b>06 自定义食物</b>　「份量描述」是新加的字段——v2 只有名称 + 热量，但同一食物在不同份量下热量能差几倍。营养素整组标为选填并说明理由，避免用户卡在这里干脆放弃记录。<b>布局上</b>：热量输入框照抄记录页的做法（56px 高、24px 字、固定单位后缀），让「这个页面的重点就是热量」一眼可见；蛋白质与碳水双列并排，脂肪单独一行。</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ §6 深色 ============ -->
+<section id="s7">
+  <p class="eyebrow">08 · Dark Theme</p>
+  <h2>深色模式 · 夜航</h2>
+  <p class="lead">
+    睡前称体重、躺床上补记饮食是很常见的使用场景，纯白界面在暗光下刺眼。深色模式不是把颜色反转，
+    而是重新配平：品牌绿提亮到 #4ECB8B 保证在深底上的可读性，阴影替换为更深的表面色。
+  </p>
+  <div class="grid g3">
+    <div class="card"><p class="t">表面抬升，不用阴影</p><p>浅色模式靠阴影表达层级，在深色模式下几乎不可见。改用三级表面色 <code>#0E1512</code> → <code>#16211C</code> → <code>#1D2A24</code> 表达深度。</p></div>
+    <div class="card"><p class="t">品牌色反转</p><p>深色底上需要更亮的绿。<code>#4ECB8B</code> 在 <code>#0E1512</code> 上对比度 9.02:1，作按钮填充时配深色文字同样 9.02:1。</p></div>
+    <div class="card"><p class="t">饱和度下调</p><p>深色底会放大高饱和色的视觉冲击。语义色在深色下统一降低饱和度并提高亮度，避免夜间阅读疲劳。</p></div>
+  </div>
+  <table class="tbl">
+    <thead><tr><th>令牌</th><th>深色值</th><th>用途</th><th>对比度（on 页面底）</th><th>结论</th></tr></thead>
+    <tbody>
+      <tr><td><span class="swatch" style="background:#E8EFEA"></span><code>--ink-1</code></td><td>#E8EFEA</td><td>标题、主数字</td><td class="num">15.83 : 1</td><td><span class="badge b-pass">AAA</span></td></tr>
+      <tr><td><span class="swatch" style="background:#A9BDB2"></span><code>--ink-2</code></td><td>#A9BDB2</td><td>正文</td><td class="num">9.35 : 1</td><td><span class="badge b-pass">AAA</span></td></tr>
+      <tr><td><span class="swatch" style="background:#87998F"></span><code>--ink-3</code></td><td>#87998F</td><td>说明、单位</td><td class="num">6.15 : 1</td><td><span class="badge b-pass">AA</span></td></tr>
+      <tr><td><span class="swatch" style="background:#4ECB8B"></span><code>--brand</code></td><td>#4ECB8B</td><td>主色 / 按钮</td><td class="num">9.02 : 1</td><td><span class="badge b-pass">AAA</span></td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:13.5px">
+    实现方式：给根节点挂 <code>data-theme="dark"</code>，令牌全部用 CSS 变量，无需写两套样式表。
+    小程序端可读取 <code>uni.getSystemInfoSync().theme</code> 跟随系统。
+  </p>
+</section>
+
+<!-- ============ §7 无障碍 ============ -->
+<section id="s8">
+  <p class="eyebrow">09 · Accessibility</p>
+  <h2>无障碍与可用性清单</h2>
+  <div class="grid g2">
+    <div class="card">
+      <p class="t">已经内置在设计里的</p>
+      <p>
+        · 全部文字/背景组合 ≥ 4.5:1（正文）、≥ 3:1（图形与描边），实测数据见 §3<br />
+        · 所有可点击元素最小 44 × 44px<br />
+        · 颜色从不作为唯一信息载体：状态都同时有图标、文案或形状变化（如打卡格同时改变底色与显示对勾）<br />
+        · 表单标签常驻可见，不依赖 placeholder<br />
+        · 支持系统「减弱动态效果」偏好，开启后关闭全部过渡
+      </p>
+    </div>
+    <div class="card">
+      <p class="t">开发时需要补上的</p>
+      <p>
+        · 所有 <code>&lt;image&gt;</code> 补 <code>aria-label</code>；装饰性图片标 <code>aria-hidden</code><br />
+        · tabbar 四项加 <code>aria-role="tab"</code> 与选中态 <code>aria-selected</code><br />
+        · 自定义控件（分段控件、开关）补 <code>aria-checked</code> / <code>aria-pressed</code><br />
+        · 体重输入框 <code>type="digit"</code> + <code>inputmode="decimal"</code>，唤起数字键盘<br />
+        · 错误提示同时用图标 + 文案 + 颜色三重表达
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ §8 落地 ============ -->
+<section id="s9">
+  <p class="eyebrow">10 · Handoff</p>
+  <h2>落地清单</h2>
+  <p class="lead">按顺序做，每一步都可独立验证，不会让应用处于半成品状态。</p>
+  <p class="lead" style="margin-top:12px;font-size:13px;color:var(--ink-3)">
+    <b>代码落地进度（2026-09-04）：</b>
+    <span style="color:#06794C">✅ 已落地</span> 步骤 1（统一令牌）→ 6（我的页布局）全部完成，构建通过；
+    步骤 7（深色模式）令牌层 + 手动开关 + 跟随系统 + 趋势页 canvas 图表配色随主题切换均已落地、构建通过，待真机 / 开发者工具验收 <code>getCurrentPages().$el</code> 挂 <code>.dark</code> 类与导航栏配色；
+    步骤 8（无障碍）aria 属性已补齐（见下），构建通过，待微信开发者工具体验评分复核。
+  </p>
+  <p class="lead" style="margin-top:8px;font-size:13px;color:var(--ink-3)">
+    <b>§8 无障碍落地明细：</b>
+    · <code>profile.vue</code> 头像两处 <code>&lt;image&gt;</code> 补 <code>aria-label</code>；
+    性别分段控件 <code>role="radiogroup"</code> + 项 <code>role="radio" :aria-checked</code>；深色开关 / 打卡提醒开关 <code>role="switch" :aria-checked</code> 且外层 <code>role="button" aria-label</code><br />
+    · <code>record.vue</code> 记录类型分段 <code>role="tablist"</code> + 项 <code>role="tab" :aria-selected</code>；体重输入 <code>type="digit"</code> + <code>inputmode="decimal"</code><br />
+    · <code>trend.vue</code> 时间范围药丸 <code>role="tablist"</code> + 项 <code>role="tab" :aria-selected</code>；趋势 canvas <code>role="img" :aria-label</code><br />
+    · <code>index.vue</code> 热量环 <code>role="img" :aria-label</code>；供能比分段条 <code>role="img" :aria-label</code><br />
+    <span style="color:#8a5a00">⚠ 限制</span> 微信原生 tabbar（<code>pages.json</code> 配置）无法直接挂 aria，需改用自定义 tabbar 才能补齐；错误提示三重表达（图标+文案+颜色）已在令牌层预留，页面层按需在报错处接入。
+  </p>
+  <ol class="steps">
+    <li>
+      <div class="st">统一令牌入口</div>
+      <p class="sd">把 §3 的令牌写进 <code>miniapp/src/App.vue</code> 的全局样式，删除 <code>uni.scss</code> 里重复的 <code>$primary</code> 系列变量（或改为引用 CSS 变量）。只有一个颜色来源。</p>
+    </li>
+    <li>
+      <div class="st">建立空间尺度 + 抽公共组件样式</div>
+      <p class="sd">新建 <code>miniapp/src/styles/components.css</code>：先放 §布局系统 的 8 个空间令牌，再放 <code>.card</code> / <code>.btn</code> / <code>.field</code> / <code>.input</code> / <code>.pill</code> / <code>.seg</code> / <code>.track</code> / <code>.g2f</code> 八件套，在 <code>App.vue</code> 全局引入，然后删除 6 个页面里的重复定义。</p>
+    </li>
+    <li>
+      <div class="st">清理硬编码色值与零碎间距</div>
+      <p class="sd">全局搜 <code>#fff</code>、<code>#e6efea</code>、<code>#edf3ef</code>、<code>#c9d8cf</code> 等字面量替换为令牌；搜 <code>6rpx/10rpx/14rpx/18rpx/22rpx/26rpx/30rpx</code> 全部归到 8rpx 倍数。这一步做完，换肤和调间距才真正生效。</p>
+    </li>
+    <li>
+      <div class="st">改首页布局（收益最大的一步）</div>
+      <p class="sd">① 热量卡与体重卡对调顺序；② 体重卡数字 46→32px、进度条并入同区（200→145px）；③ 三大营养素换成分供能比分段条（×4/×4/×9）；④ 本周打卡改 <code>repeat(7,1fr)</code> 等分；⑤ 热量环从 conic-gradient 换成 SVG <code>stroke-dasharray</code>，消除渐变边缘锯齿。改完按 575px 首屏线验证。</p>
+    </li>
+    <li>
+      <div class="st">改记录页布局</div>
+      <p class="sd">① 分段控件改 <code>position:sticky; top:0</code> 吸顶；② 日期栏从两行压成单行药丸；③ 体重输入框加高到 56px / 24px 字 / 固定单位后缀；④ 体脂与腰围用 <code>.g2f</code> 双列并排；⑤ 删除改 32px 图标块，用 <code>::after{inset:-6px}</code> 补到 44px 热区。</p>
+    </li>
+    <li>
+      <div class="st">改趋势页布局</div>
+      <p class="sd">① 范围切换改标题行右侧紧凑药丸；② 图例从卡片标题行移到图表下方居中；③ 两张图都加 y 轴刻度；④ 柱状图加「预算」虚线基线（按 <code>maxCal</code> 换算 top 值）。柱状图沿用已有修复：非零值保底 4px、动画交给 rAF。</p>
+    </li>
+    <li>
+      <div class="st">改我的页布局</div>
+      <p class="sd">① 头像区由居中改横向（170→96px）；② 菜单加「目标与测算」「数据与设置」两个组标题，7 项归位，减重目标提到第一位；③ 列表底部补 12px 安全区。</p>
+    </li>
+    <li>
+      <div class="st">接深色模式</div>
+      <p class="sd">根节点挂 <code>data-theme</code>，读取 <code>uni.getSystemInfoSync().theme</code> 跟随系统，并在「我的」页提供手动切换开关。</p>
+    </li>
+    <li>
+      <div class="st">无障碍补齐</div>
+      <p class="sd">按 §7 右侧清单补齐 aria 属性与键盘可达性，然后跑一遍微信开发者工具的体验评分。</p>
+    </li>
+  </ol>
+
+  <h3>rpx 换算</h3>
+  <p>
+    本方案以 375px 宽为基准（iPhone X）。uni-app 中 <code>1px = 2rpx</code>，
+    所以字阶 15px → <code>30rpx</code>，间距 16px → <code>32rpx</code>，圆角 12px → <code>24rpx</code>。
+    触摸目标 44px → <code>88rpx</code>。
+  </p>
+</section>
+
+<footer>
+  <span>fit-app 界面设计方案 v3 · 静水 Still Water</span>
+  <span>2026-09-04 · 令牌对比度经 WCAG 2.1 相对亮度公式实测</span>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var btn = document.getElementById('themeBtn');
+  var root = document.documentElement;
+  btn.addEventListener('click', function(){
+    var dark = root.getAttribute('data-theme') === 'dark';
+    root.setAttribute('data-theme', dark ? 'light' : 'dark');
+    btn.textContent = dark ? '切换深色' : '切换浅色';
+  });
+})();
+</script>
+</body>
+</html>

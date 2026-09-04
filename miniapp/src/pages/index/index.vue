@@ -1,76 +1,21 @@
 <template>
   <view class="page">
-    <!-- ============ 沉浸式渐变头部 ============ -->
+    <!-- ============ 顶部问候（浅色头部，去掉全幅渐变） ============ -->
     <view class="hero">
-      <view class="hero-bg" />
       <view class="hero-inner">
-        <view class="greet">
-          <text class="title">{{ greetTitle }}</text>
-          <view class="greet-sub">
-            <text class="slogan">记录每一天,看见更好的自己</text>
-            <text class="date-chip">{{ dateText }}</text>
-          </view>
-        </view>
-
-        <!-- 未授权微信时的引导入口 -->
-        <view class="wx-entry" v-if="!user.hasWxProfile" @click="goAuth">
-          <view class="wx-entry-l">
-            <text class="wx-entry-ico">👤</text>
-            <text class="wx-entry-txt">用微信头像昵称登录,记录更贴心</text>
-          </view>
-          <text class="wx-entry-btn">去授权</text>
-        </view>
-
-        <!-- 体重卡片(悬浮于渐变上) -->
-        <view class="w-card">
-          <view class="w-top">
-            <view class="w-title">
-              <text class="wt-label">当前体重</text>
-              <text class="pill" :class="bmiPillClass" v-if="bmi">
-                BMI {{ bmi }} · {{ bmiLevel }}
-              </text>
-            </view>
-
-            <view class="w-main">
-              <view class="w-num">
-                <text class="num">{{ currentWeight ?? "--" }}</text>
-                <text class="unit">kg</text>
-              </view>
-
-              <view class="w-side" v-if="targetWeight">
-                <text class="side-label">距目标</text>
-                <view class="side-val">
-                  <text class="side-num" :class="{ good: gap != null && gap <= 0 }">
-                    {{ gap == null ? "--" : gap > 0 ? gap.toFixed(1) : "已达成" }}
-                  </text>
-                  <text class="side-unit" v-if="gap != null && gap > 0">kg</text>
-                </view>
-              </view>
-              <view class="w-side" v-else>
-                <text class="side-label">还没设目标</text>
-                <navigator url="/pages/profile/goal" class="link-btn">去设置</navigator>
-              </view>
-            </view>
-          </view>
-
-          <view class="progress" v-if="progress !== null">
-            <view class="bar">
-              <view class="fill" :style="{ width: progress * 100 + '%' }" />
-            </view>
-            <view class="bar-ends">
-              <text>{{ startWeight ?? "?" }} kg 起</text>
-              <text>目标 {{ targetWeight }} kg</text>
-            </view>
-          </view>
+        <text class="title">{{ greetTitle }}</text>
+        <view class="greet-sub">
+          <text class="slogan">本周已记录 {{ weekCount }} 天</text>
+          <text class="date-chip">{{ dateText }}</text>
         </view>
       </view>
     </view>
 
-    <!-- ============ 今日热量 ============ -->
+    <!-- ============ 今日热量（首屏第一位：一天要查好几次） ============ -->
     <view class="card">
       <view class="card-head">
         <view class="head-l">
-          <text class="head-dot c-green" />
+          <text class="head-dot c-amber" />
           <text class="card-title">今日热量</text>
         </view>
         <text class="tag amber" v-if="unknownCount">
@@ -79,7 +24,12 @@
       </view>
 
       <view class="ring-row">
-        <view class="ring" :style="ringStyle">
+        <view
+          class="ring"
+          :style="ringStyle"
+          role="img"
+          :aria-label="'今日热量进度环：还可摄入 ' + remainingText + '，已摄入 ' + intake + ' 千卡，消耗 ' + burn + ' 千卡'"
+        >
           <view class="ring-inner">
             <text class="ring-num">{{ remainingText }}</text>
             <text class="ring-label">还可摄入</text>
@@ -88,45 +38,70 @@
 
         <view class="ring-info">
           <view class="info-line">
-            <view class="kpi">
-              <view class="dot in" />
-              <text>摄入</text>
-            </view>
+            <view class="kpi"><view class="dot in" /><text>摄入</text></view>
             <text class="info-num">{{ intake }} kcal</text>
           </view>
           <view class="info-line">
-            <view class="kpi">
-              <view class="dot out" />
-              <text>消耗</text>
-            </view>
+            <view class="kpi"><view class="dot out" /><text>消耗</text></view>
             <text class="info-num">{{ burn }} kcal</text>
           </view>
           <view class="info-line">
-            <view class="kpi">
-              <view class="dot budget" />
-              <text>预算</text>
-            </view>
+            <view class="kpi"><view class="dot budget" /><text>预算</text></view>
             <text class="info-num">{{ budgetText }}</text>
           </view>
         </view>
       </view>
 
-      <view class="macros">
-        <view class="macro">
-          <view class="macro-bar p" :style="proteinBar" />
-          <text class="mv">{{ protein }}g</text>
-          <text class="ml">蛋白质</text>
+      <!-- 供能比：按蛋白×4 / 碳水×4 / 脂肪×9 计算，替代三条各自为政的进度条 -->
+      <view
+        class="mbar"
+        v-if="macroPct"
+        role="img"
+        :aria-label="'供能比：蛋白 ' + protein + ' 克、碳水 ' + carbs + ' 克、脂肪 ' + fat + ' 克'"
+      >
+        <view class="mseg p" :style="{ width: macroPct.p + '%' }" />
+        <view class="mseg c" :style="{ width: macroPct.c + '%' }" />
+        <view class="mseg f" :style="{ width: macroPct.f + '%' }" />
+      </view>
+      <view class="mlegend" v-if="macroPct">
+        <view class="ml-item"><view class="ml-dot p" /><text>蛋白</text><text class="mv num">{{ protein }}g</text></view>
+        <view class="ml-item"><view class="ml-dot c" /><text>碳水</text><text class="mv num">{{ carbs }}g</text></view>
+        <view class="ml-item"><view class="ml-dot f" /><text>脂肪</text><text class="mv num">{{ fat }}g</text></view>
+      </view>
+    </view>
+
+    <!-- ============ 体重（第二位，横向压缩：200rpx 级 → 290rpx 级） ============ -->
+    <view class="card">
+      <view class="card-head">
+        <view class="head-l">
+          <text class="head-dot c-green" />
+          <text class="card-title">体重</text>
         </view>
-        <view class="macro">
-          <view class="macro-bar c" :style="carbsBar" />
-          <text class="mv">{{ carbs }}g</text>
-          <text class="ml">碳水</text>
+        <text class="pill g" v-if="bmi">BMI {{ bmi }} · {{ bmiLevel }}</text>
+      </view>
+
+      <view class="w-line">
+        <view class="w-big">
+          <text class="big num">{{ currentWeight ?? "--" }}</text>
+          <text class="big-unit">kg</text>
         </view>
-        <view class="macro">
-          <view class="macro-bar f" :style="fatBar" />
-          <text class="mv">{{ fat }}g</text>
-          <text class="ml">脂肪</text>
+        <text
+          class="w-gap num"
+          :class="{ good: gap != null && gap <= 0 }"
+          v-if="targetWeight && gap != null"
+        >{{ gap > 0 ? "距目标 " + gap.toFixed(1) + " kg" : "已达成" }}</text>
+      </view>
+
+      <view class="progress" v-if="progress !== null">
+        <view class="bar"><view class="fill" :style="{ width: progress * 100 + '%' }" /></view>
+        <view class="bar-ends">
+          <text>{{ startWeight ?? "?" }} kg 起</text>
+          <text>目标 {{ targetWeight }} kg</text>
         </view>
+      </view>
+      <view class="nogoal" v-else-if="!targetWeight">
+        <text class="nogoal-txt">还没设目标</text>
+        <navigator url="/pages/profile/goal" class="link-btn hit">去设置</navigator>
       </view>
     </view>
 
@@ -145,11 +120,11 @@
           <text v-if="t.done" class="tick">✓</text>
         </view>
         <text class="task-text" :class="{ done: t.done }">{{ t.text }}</text>
-        <view class="task-action" v-if="!t.done" @click="goRecord(t.tab)">去记录</view>
+        <view class="task-action hit" v-if="!t.done" @click="goRecord(t.tab)">去记录</view>
       </view>
     </view>
 
-    <!-- ============ 本周概览 ============ -->
+    <!-- ============ 本周打卡（7 等分，不再 space-between） ============ -->
     <view class="card">
       <view class="card-head">
         <view class="head-l">
@@ -167,9 +142,9 @@
       </view>
       <view class="week-sum">
         近 7 天记录了
-        <text class="hl">{{ weekCount }}</text>
+        <text class="hl num">{{ weekCount }}</text>
         天,体重变化
-        <text class="hl">{{ weekChangeText }}</text>
+        <text class="hl num">{{ weekChangeText }}</text>
       </view>
     </view>
 
@@ -185,6 +160,7 @@ import { onShow } from "@dcloudio/uni-app";
 import { statsApi } from "@/api";
 import { useUserStore } from "@/store/user";
 import { today, niceDate, addDays, weekdayCN } from "@/utils/date";
+import { applyTheme } from "@/utils/theme";
 
 const user = useUserStore();
 const summary = ref(null);
@@ -231,10 +207,10 @@ const bmi = computed(() => plan.value?.bmi ?? null);
 const bmiLevel = computed(() => plan.value?.bmi_level ?? "");
 const bmiPillClass = computed(() => {
   const l = bmiLevel.value;
-  if (l.includes("肥胖")) return "danger";
-  if (l.includes("偏胖") || l.includes("超重")) return "amber";
-  if (l.includes("偏瘦")) return "blue";
-  return "green";
+  if (l.includes("肥胖")) return "r";
+  if (l.includes("偏胖") || l.includes("超重")) return "a";
+  if (l.includes("偏瘦")) return "b";
+  return "g";
 });
 
 const intake = computed(() => Math.round(summary.value?.intake_kcal ?? 0));
@@ -255,28 +231,25 @@ const remainingText = computed(() => {
 
 const ringStyle = computed(() => {
   const pct = budget.value
-    ? Math.min(intake.value / budget.value, 1.5) / 1.5 * 100
+    ? (Math.min(intake.value / budget.value, 1.5) / 1.5) * 100
     : 0;
   const over = budget.value && intake.value > budget.value;
-  const color = over ? "#e85447" : "var(--brand)";
+  const color = over ? "var(--red-fill)" : "var(--brand)";
   return {
-    background: `conic-gradient(${color} ${pct}%, #e6efea ${pct}%)`,
+    background: `conic-gradient(${color} ${pct}%, var(--surface-2) ${pct}%)`,
   };
 });
 
-// 三大营养素迷你进度条(占当前摄入热量的参考比例,封顶 100%)
-const maxMacro = computed(() =>
-  Math.max(1, protein.value, carbs.value, fat.value)
-);
-const proteinBar = computed(() => ({
-  width: (protein.value / maxMacro.value) * 100 + "%",
-}));
-const carbsBar = computed(() => ({
-  width: (carbs.value / maxMacro.value) * 100 + "%",
-}));
-const fatBar = computed(() => ({
-  width: (fat.value / maxMacro.value) * 100 + "%",
-}));
+// 供能比：热量来源占比（蛋白/碳水 4 kcal/g，脂肪 9 kcal/g）
+const macroPct = computed(() => {
+  const p = protein.value * 4;
+  const c = carbs.value * 4;
+  const f = fat.value * 9;
+  const t = p + c + f;
+  if (!t) return null;
+  const r = (v) => Math.round((v / t) * 1000) / 10;
+  return { p: r(p), c: r(c), f: r(f) };
+});
 
 const tasks = computed(() => {
   const s = summary.value;
@@ -302,14 +275,10 @@ function goRecord(tab) {
   uni.switchTab({ url: "/pages/record/record" });
 }
 
-function goAuth() {
-  uni.navigateTo({ url: "/pages/profile/wx-auth" });
-}
-
 async function load() {
   try {
     await user.ensureLogin();
-    // 强制刷新用户资料,保证昵称/头像即时更新(授权页返回后生效)
+    // 刷新用户资料，保证头像昵称修改后即时生效
     await user.loadProfile();
     const d = today();
     const [s, p, o] = await Promise.all([
@@ -337,329 +306,161 @@ async function load() {
     }
     week.value = list;
 
-    // 首次进入:尚未授权微信资料时,顶部问候下出现"微信授权"入口提示
-    if (!user.hasWxProfile && !uni.getStorageSync("wx_auth_hint_shown")) {
-      uni.setStorageSync("wx_auth_hint_shown", 1);
-      uni.showToast({ title: "未授权微信,去「我的」页绑定吧", icon: "none" });
-    }
   } catch (e) {
     console.error(e);
   }
 }
 
-onShow(load);
+onShow(() => {
+  load();
+  applyTheme();
+});
 </script>
 
 <style scoped lang="scss">
-/* ============ 沉浸式渐变头部 ============ */
-.hero {
-  position: relative;
-  background: linear-gradient(160deg, #14b97e 0%, #0da267 55%, #0b8f59 100%);
-  padding-top: var(--status-bar-height);
-  padding-bottom: 120rpx;
-  overflow: hidden;
-}
+/* ============ 页面 ============ */
 .page {
-  background: linear-gradient(180deg, #e8f5ee 0%, var(--bg) 200rpx);
+  background: var(--bg);
+  padding-bottom: 48rpx;
+  min-height: 100vh;
 }
-.hero-bg {
-  position: absolute;
-  right: -120rpx;
-  top: -140rpx;
-  width: 440rpx;
-  height: 440rpx;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 70%);
-  pointer-events: none;
+
+/* ============ 顶部问候（浅色，不再用全幅渐变） ============ */
+.hero {
+  padding: 32rpx var(--pad-x) 8rpx;
 }
 .hero-inner {
-  position: relative;
-  padding: 24rpx 32rpx 0;
-}
-.greet {
-  margin-top: 44rpx;
   .title {
     display: block;
-    font-size: 52rpx;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: 2rpx;
+    font-size: 50rpx;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -1rpx;
+    line-height: 1.2;
   }
   .greet-sub {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 10rpx;
+    margin-top: 12rpx;
+  }
+  .slogan {
+    font-size: 25rpx;
+    color: var(--brand);
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
   }
   .date-chip {
-    font-size: 24rpx;
-    color: rgba(255, 255, 255, 0.92);
-    background: rgba(255, 255, 255, 0.18);
-    border: 1rpx solid rgba(255, 255, 255, 0.3);
-    padding: 10rpx 24rpx;
-    border-radius: 999rpx;
+    font-size: 23rpx;
+    color: var(--ink-3);
+    background: var(--card);
+    border: 1rpx solid var(--line);
+    padding: 8rpx 24rpx;
+    border-radius: var(--r-pill);
     margin-left: 20rpx;
     flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
   }
-}
-.slogan {
-  font-size: 26rpx;
-  color: rgba(255, 255, 255, 0.78);
-  flex: 1;
-  min-width: 0;
-}
-
-/* 微信授权引导 */
-.wx-entry {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 26rpx;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1rpx solid rgba(255, 255, 255, 0.28);
-  border-radius: 22rpx;
-  padding: 18rpx 24rpx;
-}
-.wx-entry-l {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-}
-.wx-entry-ico {
-  font-size: 30rpx;
-  margin-right: 14rpx;
-}
-.wx-entry-txt {
-  font-size: 24rpx;
-  color: #fff;
-  opacity: 0.9;
-}
-.wx-entry-btn {
-  font-size: 22rpx;
-  font-weight: 600;
-  color: #0b7a50;
-  background: #fff;
-  border-radius: 999rpx;
-  padding: 10rpx 26rpx;
-  flex-shrink: 0;
-}
-
-/* 悬浮体重卡 */
-.w-card {
-  margin-top: 36rpx;
-  background: #fff;
-  border-radius: var(--r-lg);
-  padding: 30rpx 32rpx;
-  box-shadow: var(--shadow-card);
-}
-.w-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 26rpx;
-}
-.w-title {
-  display: flex;
-  align-items: center;
-  .wt-label {
-    font-size: 30rpx;
-    font-weight: 600;
-    color: var(--ink);
-    margin-right: 16rpx;
-  }
-}
-.pill {
-  font-size: 20rpx;
-  padding: 6rpx 18rpx;
-  border-radius: 999rpx;
-  &.green {
-    color: var(--brand-deep);
-    background: var(--brand-tint);
-  }
-  &.amber {
-    color: #a86a10;
-    background: var(--amber-tint);
-  }
-  &.danger {
-    color: #b33a30;
-    background: var(--red-tint);
-  }
-  &.blue {
-    color: #2c6ea8;
-    background: var(--blue-tint);
-  }
-}
-.w-main {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-}
-.w-num {
-  display: flex;
-  align-items: baseline;
-  .num {
-    font-size: 88rpx;
-    font-weight: 700;
-    color: var(--ink);
-    line-height: 1;
-  }
-  .unit {
-    font-size: 28rpx;
-    color: var(--ink-3);
-    margin-left: 8rpx;
-  }
-}
-.w-side {
-  text-align: right;
-  padding-bottom: 4rpx;
-  .side-label {
-    font-size: 22rpx;
-    color: var(--ink-3);
-    display: block;
-  }
-  .side-val {
-    display: flex;
-    align-items: baseline;
-    justify-content: flex-end;
-    margin-top: 4rpx;
-  }
-  .side-num {
-    font-size: 44rpx;
-    font-weight: 600;
-    color: var(--amber);
-    &.good {
-      color: var(--brand);
-    }
-  }
-  .side-unit {
-    font-size: 22rpx;
-    color: var(--ink-3);
-    margin-left: 6rpx;
-  }
-  .link-btn {
-    display: inline-block;
-    margin-top: 10rpx;
-    font-size: 24rpx;
-    color: #fff;
-    background: var(--grad-brand);
-    padding: 10rpx 26rpx;
-    border-radius: 999rpx;
-    box-shadow: var(--shadow-btn);
-  }
-}
-.progress {
-  margin-top: 10rpx;
-  padding-top: 24rpx;
-  border-top: 1rpx solid var(--line);
-}
-.bar {
-  height: 14rpx;
-  background: #e6efea;
-  border-radius: 8rpx;
-  overflow: hidden;
-}
-.fill {
-  height: 100%;
-  background: var(--grad-brand);
-  border-radius: 8rpx;
-  transition: width 0.4s;
-}
-.bar-ends {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 12rpx;
-  font-size: 22rpx;
-  color: var(--ink-3);
 }
 
 /* ============ 通用卡片 ============ */
 .card {
   background: var(--card);
+  border: 1rpx solid var(--line);
   border-radius: var(--r-lg);
-  padding: 30rpx 32rpx;
-  margin: 0 24rpx 24rpx;
+  padding: var(--pad-card);
+  margin: 0 var(--pad-x) var(--gap-card);
   box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
 .card-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 26rpx;
+  margin-bottom: 24rpx;
 }
 .head-l {
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 .head-dot {
-  width: 14rpx;
-  height: 14rpx;
+  width: 12rpx;
+  height: 12rpx;
   border-radius: 50%;
-  margin-right: 14rpx;
-  &.c-green {
-    background: var(--brand);
-  }
-  &.c-amber {
-    background: var(--amber);
-  }
-  &.c-blue {
-    background: var(--blue);
-  }
+  margin-right: 16rpx;
+  flex-shrink: 0;
+  &.c-green { background: var(--brand); }
+  &.c-amber { background: var(--amber-fill); }
+  &.c-blue  { background: var(--blue-fill); }
 }
 .card-title {
   font-size: 32rpx;
   font-weight: 600;
   color: var(--ink);
+  letter-spacing: -0.4rpx;
 }
 .tag {
   font-size: 22rpx;
   padding: 8rpx 20rpx;
-  border-radius: 999rpx;
-  &.amber {
-    color: #a86a10;
-    background: var(--amber-tint);
-  }
+  border-radius: var(--r-pill);
+  flex-shrink: 0;
+  &.amber { color: var(--amber); background: var(--amber-tint); }
 }
+.pill {
+  font-size: 21rpx;
+  font-weight: 700;
+  padding: 6rpx 16rpx;
+  border-radius: var(--r-pill);
+  flex-shrink: 0;
+  &.g { color: var(--brand); background: var(--brand-tint); }
+  &.a { color: var(--amber);  background: var(--amber-tint); }
+  &.r { color: var(--red);    background: var(--red-tint); }
+  &.b { color: var(--blue);   background: var(--blue-tint); }
+}
+.num { font-variant-numeric: tabular-nums; }
 
-/* 今日热量 */
+/* ============ 今日热量 ============ */
 .ring-row {
   display: flex;
   align-items: center;
 }
 .ring {
-  width: 216rpx;
-  height: 216rpx;
+  width: 200rpx;
+  height: 200rpx;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: inset 0 0 0 1rpx rgba(20, 94, 62, 0.04);
 }
 .ring-inner {
-  width: 168rpx;
-  height: 168rpx;
+  width: 156rpx;
+  height: 156rpx;
   border-radius: 50%;
-  background: #fff;
+  background: var(--card);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6rpx 18rpx rgba(20, 94, 62, 0.08);
 }
 .ring-num {
-  font-size: 46rpx;
+  font-size: 44rpx;
   font-weight: 700;
   color: var(--ink);
+  letter-spacing: -1rpx;
+  font-variant-numeric: tabular-nums;
 }
 .ring-label {
-  font-size: 22rpx;
+  font-size: 21rpx;
   color: var(--ink-3);
   margin-top: 4rpx;
 }
 .ring-info {
-  margin-left: 36rpx;
+  margin-left: 32rpx;
   flex: 1;
+  min-width: 0;
 }
 .info-line {
   display: flex;
@@ -668,186 +469,240 @@ onShow(load);
   font-size: 26rpx;
   color: var(--ink-2);
   margin-bottom: 20rpx;
-  &:last-child {
-    margin-bottom: 0;
-  }
-  .kpi {
-    display: flex;
-    align-items: center;
-  }
+  &:last-child { margin-bottom: 0; }
+  .kpi { display: flex; align-items: center; }
 }
 .info-num {
   font-size: 30rpx;
   font-weight: 600;
   color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 .dot {
-  width: 16rpx;
-  height: 16rpx;
+  width: 14rpx;
+  height: 14rpx;
   border-radius: 50%;
   margin-right: 12rpx;
-  &.in {
-    background: var(--brand);
+  flex-shrink: 0;
+  &.in { background: var(--brand); }
+  &.out { background: var(--blue-fill); }
+  &.budget { background: var(--line-strong); }
+}
+
+/* 供能比分段条 */
+.mbar {
+  display: flex;
+  height: 16rpx;
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  background: var(--surface-2);
+  margin-top: 32rpx;
+}
+.mseg {
+  height: 100%;
+  &.p { background: var(--brand); }
+  &.c { background: var(--amber-fill); }
+  &.f { background: var(--blue-fill); }
+}
+.mlegend {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16rpx;
+  gap: 12rpx;
+}
+.ml-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 23rpx;
+  color: var(--ink-3);
+  min-width: 0;
+}
+.ml-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 4rpx;
+  flex-shrink: 0;
+  &.p { background: var(--brand); }
+  &.c { background: var(--amber-fill); }
+  &.f { background: var(--blue-fill); }
+}
+.mv {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ============ 体重卡（横向压缩） ============ */
+.w-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+.w-big {
+  display: flex;
+  align-items: baseline;
+  gap: 6rpx;
+  min-width: 0;
+  .big {
+    font-size: 64rpx;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -2rpx;
+    line-height: 1.1;
   }
-  &.out {
-    background: var(--blue);
-  }
-  &.budget {
-    background: #cdd9d1;
+  .big-unit {
+    font-size: 26rpx;
+    font-weight: 600;
+    color: var(--ink-3);
   }
 }
-.macros {
-  display: flex;
-  margin-top: 28rpx;
+.w-gap {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--amber);
+  flex-shrink: 0;
+  &.good { color: var(--brand); }
+}
+.progress {
+  margin-top: 24rpx;
   padding-top: 24rpx;
   border-top: 1rpx solid var(--line);
 }
-.macro {
-  flex: 1;
-  text-align: center;
-  padding: 0 8rpx;
-  .mv {
-    display: block;
-    font-size: 32rpx;
-    font-weight: 600;
-    color: var(--ink);
-  }
-  .ml {
-    display: block;
-    font-size: 22rpx;
-    color: var(--ink-3);
-    margin-top: 6rpx;
-  }
+.bar {
+  height: 16rpx;
+  background: var(--surface-2);
+  border-radius: var(--r-pill);
+  overflow: hidden;
 }
-.macro-bar {
-  height: 6rpx;
-  border-radius: 3rpx;
-  margin: 0 auto 14rpx;
-  max-width: 120rpx;
-  transition: width 0.4s;
-  &.p {
-    background: var(--brand);
-  }
-  &.c {
-    background: var(--amber);
-  }
-  &.f {
-    background: var(--blue);
+.fill {
+  height: 100%;
+  background: var(--grad-brand);
+  border-radius: var(--r-pill);
+  transition: width var(--d-slow) var(--e-out);
+}
+.bar-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.nogoal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid var(--line);
+  .nogoal-txt { font-size: 25rpx; color: var(--ink-3); }
+  .link-btn {
+    font-size: 25rpx;
+    font-weight: 600;
+    color: var(--on-brand);
+    background: var(--grad-brand);
+    padding: 16rpx 32rpx;
+    border-radius: var(--r-pill);
+    box-shadow: var(--shadow-btn);
   }
 }
 
-/* 今日任务 */
+/* ============ 今日任务 ============ */
 .task-count {
   font-size: 22rpx;
   color: var(--ink-3);
+  flex-shrink: 0;
 }
 .task {
   display: flex;
   align-items: center;
-  padding: 20rpx 0;
-  &:not(:last-child) {
-    border-bottom: 1rpx solid var(--line);
-  }
+  padding: 16rpx 0;
+  &:not(:last-child) { border-bottom: 1rpx solid var(--line); }
 }
 .task-box {
   width: 46rpx;
   height: 46rpx;
   border-radius: 50%;
-  border: 2rpx solid #c9d8cf;
+  border: 2rpx solid var(--line-strong);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: #fff;
-  &.done {
-    background: var(--grad-brand);
-    border-color: transparent;
-  }
+  background: var(--card);
+  &.done { background: var(--grad-brand); border-color: transparent; }
 }
-.tick {
-  color: #fff;
-  font-size: 26rpx;
-  font-weight: 600;
-}
+.tick { color: var(--on-brand); font-size: 26rpx; font-weight: 600; }
 .task-text {
   font-size: 28rpx;
   color: var(--ink-2);
-  margin-left: 22rpx;
+  margin-left: 20rpx;
   flex: 1;
-  &.done {
-    color: var(--ink-3);
-    text-decoration: line-through;
-  }
+  min-width: 0;
+  &.done { color: var(--ink-3); text-decoration: line-through; }
 }
 .task-action {
   font-size: 24rpx;
-  color: var(--brand-deep);
+  font-weight: 600;
+  color: var(--brand);
   background: var(--brand-tint);
-  padding: 10rpx 26rpx;
-  border-radius: 999rpx;
-  font-weight: 500;
+  padding: 12rpx 24rpx;
+  border-radius: var(--r-pill);
+  flex-shrink: 0;
 }
 
-/* 本周打卡 */
+/* ============ 本周打卡（7 等分） ============ */
 .week-grid {
   display: flex;
-  justify-content: space-between;
-  padding: 4rpx 8rpx;
+  gap: 8rpx;
 }
 .week-day {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 .wd-label {
-  font-size: 24rpx;
+  font-size: 23rpx;
   color: var(--ink-3);
   margin-bottom: 12rpx;
-  &.on {
-    color: var(--brand-deep);
-    font-weight: 600;
-  }
+  &.on { color: var(--brand); font-weight: 700; }
 }
 .wd-badge {
-  width: 52rpx;
-  height: 52rpx;
-  border-radius: 18rpx;
-  background: #edf3ef;
+  width: 56rpx;
+  height: 56rpx;
+  max-width: 100%;
+  border-radius: 20rpx;
+  background: var(--surface-2);
   display: flex;
   align-items: center;
   justify-content: center;
   &.on {
     background: var(--grad-brand);
-    box-shadow: 0 6rpx 14rpx rgba(14, 158, 104, 0.3);
+    box-shadow: 0 6rpx 14rpx rgba(6, 121, 76, 0.28);
   }
 }
-.wd-check {
-  color: #fff;
-  font-size: 26rpx;
-  font-weight: 600;
-}
+.wd-check { color: var(--on-brand); font-size: 26rpx; font-weight: 600; }
 .week-sum {
-  margin-top: 28rpx;
+  margin-top: 32rpx;
   padding-top: 24rpx;
   border-top: 1rpx solid var(--line);
   font-size: 24rpx;
   color: var(--ink-2);
+  line-height: 1.7;
 }
 .hl {
-  color: var(--brand-deep);
-  font-weight: 600;
+  color: var(--brand);
+  font-weight: 700;
   padding: 0 4rpx;
 }
 
-/* 页脚 */
-.page {
-  padding-bottom: 48rpx;
-  min-height: 100vh;
-}
+/* ============ 页脚 ============ */
 .disclaimer {
-  margin: 8rpx 32rpx 0;
+  margin: 8rpx var(--pad-x) 0;
   font-size: 20rpx;
-  color: var(--ink-4);
+  color: var(--ink-3);
   text-align: center;
   line-height: 1.7;
 }

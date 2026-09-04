@@ -1,21 +1,9 @@
-/* 清爽风设计变量 */
-$primary: #10b981;
-$primary-light: #d1fae5;
-$primary-dark: #059669;
-$warning: #f59e0b;
-$danger: #ef4444;
-$page-bg: #f7f9f8;
-$card-bg: #ffffff;
-$text-main: #111827;
-$text-sub: #6b7280;
-$text-hint: #9ca3af;
-$border: #eef2f1;
-$radius: 12px;
-$gap: 12px;
+/* ============================================================
+   uni.scss —— 已废弃，请勿在此定义颜色
+   ============================================================
+   v3 起全站唯一的设计令牌来源是 `App.vue` 里的 CSS 变量。
+   这里保留空文件是因为 uni-app 构建需要它存在。
 
-@mixin card {
-  background: $card-bg;
-  border-radius: $radius;
-  padding: 16px;
-  margin: 0 12px 12px;
-}
+   用法：直接 `var(--brand)` / `var(--pad-x)`，不要写 SCSS 变量。
+   详见 docs/ui-design-v3.html §设计令牌 / §布局系统。
+   ============================================================ */

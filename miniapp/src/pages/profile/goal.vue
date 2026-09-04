@@ -1,280 +1,86 @@
 <template>
   <view class="page">
+    <view class="goal-overview card">
+      <view class="goal-item"><view class="goal-circle"><text>{{ form.start_weight || "--" }}</text></view><text>起始 kg</text></view>
+      <view class="goal-flow"><text class="flow-arrow">→</text><text class="flow-tag">{{ form.daily_deficit }} 千卡/日</text></view>
+      <view class="goal-item"><view class="goal-circle target"><text>{{ form.target_weight || "--" }}</text></view><text>目标 kg</text></view>
+    </view>
+
     <view class="card">
-      <view class="card-head">
-        <view class="head-l">
-          <text class="head-dot c-green" />
-          <text class="card-title">设置减重目标</text>
-        </view>
-      </view>
-
-      <view class="field-row">
-        <view class="field flex1">
-          <text class="label">起始体重（kg）</text>
-          <view class="input-wrap">
-            <input class="input" type="digit" v-model="form.start_weight" placeholder="80" />
-            <text class="unit-suffix" v-if="form.start_weight">kg</text>
-          </view>
-        </view>
-        <view class="field flex1">
-          <text class="label">目标体重（kg）</text>
-          <view class="input-wrap">
-            <input class="input" type="digit" v-model="form.target_weight" placeholder="70" />
-            <text class="unit-suffix" v-if="form.target_weight">kg</text>
-          </view>
-        </view>
-      </view>
-
+      <view class="card-head"><view class="head-l"><text class="head-dot c-amber" /><text class="card-title">目标设置</text></view></view>
       <view class="field">
+        <text class="label">目标体重（kg）</text>
+        <view class="input-wrap"><input class="input input-big" type="digit" inputmode="decimal" v-model="form.target_weight" placeholder="例如 62.0" /><text class="unit-suffix" v-if="form.target_weight">kg</text></view>
+      </view>
+      <view class="field">
+        <text class="label">每日热量缺口</text>
+        <view class="seg" role="radiogroup" aria-label="每日热量缺口">
+          <view v-for="item in deficitOptions" :key="item.value" class="seg-item" :class="{ on: form.daily_deficit === item.value }" role="radio" :aria-checked="form.daily_deficit === item.value" @click="form.daily_deficit = item.value">{{ item.label }}</view>
+        </view>
+        <text class="field-help">{{ deficitHelp }}</text>
+      </view>
+      <view class="field last-field">
         <text class="label">目标日期（选填）</text>
-        <picker mode="date" :value="form.target_date" :start="todayStr" @change="onDate">
-          <view class="picker" :class="{ empty: !form.target_date }">
-            {{ form.target_date || "不设期限" }}
-            <text class="chev-r">›</text>
-          </view>
-        </picker>
-      </view>
-
-      <view class="field">
-        <view class="deficit-head">
-          <text class="label">每日热量缺口</text>
-          <text class="deficit-val">{{ form.daily_deficit }}<text class="dv-unit"> 千卡</text></text>
-        </view>
-        <slider
-          :value="form.daily_deficit"
-          min="0"
-          max="1000"
-          step="50"
-          activeColor="#0e9e68"
-          backgroundColor="#e4ede6"
-          block-size="26"
-          block-color="#ffffff"
-          @changing="onDeficit"
-        />
-        <view class="slider-hint">
-          <text>0 · 维持</text>
-          <text>500 ≈ 每周减 0.5kg</text>
-          <text>1000 · 激进</text>
-        </view>
-      </view>
-
-      <button class="btn" @click="save">保存目标</button>
-      <view class="note">
-        <text class="note-ico">💡</text>
-        <text>
-          每天 500 千卡缺口对应每周约减 0.5kg,是比较可持续的节奏。
-          设置过大缺口容易反弹,后端也会把摄入限制在不低于基础代谢。
-        </text>
+        <picker mode="date" :value="form.target_date" :start="todayStr" @change="onDate"><view class="picker" :class="{ empty: !form.target_date }">{{ form.target_date || "不设期限" }}<text>›</text></view></picker>
       </view>
     </view>
+
+    <view class="card">
+      <view class="card-head"><view class="head-l"><text class="head-dot c-blue" /><text class="card-title">身体数据</text></view></view>
+      <view class="field-row">
+        <view class="field flex1"><text class="label">起始体重（kg）</text><view class="input-wrap"><input class="input" type="digit" inputmode="decimal" v-model="form.start_weight" placeholder="例如 68.0" /><text class="unit-suffix" v-if="form.start_weight">kg</text></view></view>
+        <view class="field flex1"><text class="label">当前体重（kg）</text><view class="current-weight">以最新体重记录为准</view></view>
+      </view>
+    </view>
+
+    <view class="tip"><text>💡</text><text>缺口越大掉得越快，但也越难坚持。300 千卡/日通常是更容易长期坚持的节奏。</text></view>
+    <view class="save-area"><button class="btn btn-primary" @click="save">保存目标</button><text>目标可随时修改，改动只影响之后的测算</text></view>
   </view>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
+import { onShow } from "@dcloudio/uni-app";
 import { authApi } from "@/api";
 import { useUserStore } from "@/store/user";
 import { today } from "@/utils/date";
+import { applyTheme } from "@/utils/theme";
 
 const user = useUserStore();
-const todayStr = today(); // 本地时区的今天（toISOString 是 UTC，凌晨会差一天）
-const form = ref({
-  start_weight: "",
-  target_weight: "",
-  target_date: "",
-  daily_deficit: 500,
-});
-
-function onDate(e) {
-  form.value.target_date = e.detail.value;
-}
-function onDeficit(e) {
-  form.value.daily_deficit = e.detail.value;
-}
-
+const todayStr = today();
+const deficitOptions = [{ value: 200, label: "200" }, { value: 300, label: "300" }, { value: 500, label: "500" }];
+const form = ref({ start_weight: "", target_weight: "", target_date: "", daily_deficit: 300 });
+const deficitHelp = computed(() => form.value.daily_deficit === 200 ? "稳一点：进度较慢，但对日常影响更小。" : form.value.daily_deficit === 500 ? "快一点：需要更稳定的饮食和运动配合。" : "推荐：约每周 0.3 kg，兼顾速度与可持续性。 ");
+function onDate(e) { form.value.target_date = e.detail.value; }
 async function save() {
   const payload = { daily_deficit: Number(form.value.daily_deficit) };
   if (form.value.start_weight) payload.start_weight = Number(form.value.start_weight);
   if (form.value.target_weight) payload.target_weight = Number(form.value.target_weight);
   if (form.value.target_date) payload.target_date = form.value.target_date;
-
   await user.saveGoal(payload);
   uni.showToast({ title: "已保存", icon: "success" });
   setTimeout(() => uni.navigateBack(), 600);
 }
-
 onMounted(async () => {
   try {
     await user.ensureLogin();
     const g = await authApi.getGoal();
     if (g) {
-      form.value = {
-        start_weight: g.start_weight ? String(g.start_weight) : "",
-        target_weight: g.target_weight ? String(g.target_weight) : "",
-        target_date: g.target_date || "",
-        daily_deficit: g.daily_deficit || 500,
-      };
+      const deficit = Number(g.daily_deficit);
+      form.value = { start_weight: g.start_weight ? String(g.start_weight) : "", target_weight: g.target_weight ? String(g.target_weight) : "", target_date: g.target_date || "", daily_deficit: [200, 300, 500].includes(deficit) ? deficit : 300 };
     }
-  } catch (e) {
-    console.error(e);
-  }
+  } catch (e) { console.error(e); }
 });
+onShow(() => applyTheme());
 </script>
 
 <style scoped lang="scss">
-.page {
-  padding: 24rpx 0 60rpx;
-  background: var(--bg);
-  min-height: 100vh;
-}
-.card {
-  background: var(--card);
-  border-radius: var(--r-lg);
-  padding: 32rpx;
-  margin: 24rpx;
-  box-shadow: var(--shadow-card);
-}
-.card-head {
-  display: flex;
-  align-items: center;
-  margin-bottom: 30rpx;
-}
-.head-l {
-  display: flex;
-  align-items: center;
-}
-.head-dot {
-  width: 14rpx;
-  height: 14rpx;
-  border-radius: 50%;
-  margin-right: 14rpx;
-  background: var(--brand);
-}
-.card-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.field {
-  margin-bottom: 30rpx;
-}
-.field-row {
-  display: flex;
-  gap: 20rpx;
-}
-.flex1 {
-  flex: 1;
-  min-width: 0;
-}
-.label {
-  display: block;
-  font-size: 24rpx;
-  font-weight: 500;
-  color: var(--ink-2);
-  margin-bottom: 12rpx;
-}
-.input-wrap {
-  position: relative;
-}
-.input {
-  height: 100rpx;
-  width: 100%;
-  background: #f1f6f3;
-  border: 1rpx solid #e3ece6;
-  border-radius: var(--r-md);
-  padding: 0 26rpx;
-  font-size: 34rpx;
-  font-weight: 500;
-  color: var(--ink);
-  box-sizing: border-box;
-}
-.unit-suffix {
-  position: absolute;
-  right: 26rpx;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 26rpx;
-  color: var(--ink-3);
-  font-weight: 500;
-}
-.picker {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 100rpx;
-  background: #f1f6f3;
-  border: 1rpx solid #e3ece6;
-  border-radius: var(--r-md);
-  padding: 0 26rpx;
-  font-size: 30rpx;
-  color: var(--ink);
-  box-sizing: border-box;
-  &.empty {
-    color: var(--ink-4);
-  }
-}
-.chev-r {
-  color: var(--ink-4);
-  font-size: 32rpx;
-}
-
-/* 缺口滑杆 */
-.deficit-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  .label {
-    margin-bottom: 0;
-  }
-  .deficit-val {
-    font-size: 36rpx;
-    font-weight: 700;
-    color: var(--brand-deep);
-    .dv-unit {
-      font-size: 22rpx;
-      font-weight: 400;
-      color: var(--ink-3);
-    }
-  }
-}
-.slider-hint {
-  display: flex;
-  justify-content: space-between;
-  font-size: 20rpx;
-  color: var(--ink-4);
-  margin-top: 4rpx;
-}
-
-.btn {
-  width: 100%;
-  height: 100rpx;
-  border-radius: 999rpx;
-  background: var(--grad-brand);
-  color: #fff;
-  font-size: 32rpx;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 16rpx;
-  box-shadow: var(--shadow-btn);
-}
-button.btn {
-  line-height: 100rpx;
-}
-.note {
-  display: flex;
-  align-items: flex-start;
-  margin-top: 26rpx;
-  background: #f5f9f6;
-  border-radius: var(--r-sm);
-  padding: 20rpx 24rpx;
-  font-size: 22rpx;
-  color: var(--ink-3);
-  line-height: 1.7;
-  .note-ico {
-    margin-right: 12rpx;
-  }
-}
+.page { min-height: 100vh; padding: var(--gap-card) 0 48rpx; background: var(--bg); }
+.card { margin: 0 var(--pad-x) var(--gap-card); }
+.goal-overview { display: flex; align-items: center; justify-content: space-between; padding: 36rpx var(--pad-card); }
+.goal-item { display: flex; flex-direction: column; align-items: center; gap: 12rpx; color: var(--ink-3); font-size: 22rpx; }
+.goal-circle { width: 112rpx; height: 112rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--surface-2); border: 1rpx solid var(--line); color: var(--ink); font-size: 34rpx; font-weight: 700; }.goal-circle.target { background: var(--brand-tint); border-color: var(--brand); color: var(--brand); }
+.goal-flow { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8rpx; color: var(--ink-3); }.flow-arrow { font-size: 34rpx; line-height: 1; }.flow-tag { padding: 5rpx 14rpx; background: var(--amber-tint); border-radius: var(--r-pill); color: var(--amber); font-size: 20rpx; font-weight: 600; white-space: nowrap; }
+.field { margin-bottom: var(--gap-field); }.last-field { margin-bottom: 0; }.label { display: block; margin-bottom: var(--gap-label); color: var(--ink-2); font-size: 25rpx; font-weight: 600; }.input-wrap { position: relative; }.input { background: var(--card); }.input-big { font-size: 44rpx; min-height: 112rpx; }.picker { min-height: var(--hit-min); padding: 0 24rpx; display: flex; align-items: center; justify-content: space-between; border: 1rpx solid var(--line-strong); border-radius: var(--r-md); color: var(--ink); background: var(--card); font-size: 28rpx; }.picker.empty { color: var(--ink-3); }.field-help { display: block; margin-top: 14rpx; color: var(--ink-3); font-size: 22rpx; line-height: 1.6; }.field-row { display: flex; gap: var(--gap-field); }.flex1 { flex: 1; min-width: 0; }.current-weight { min-height: var(--hit-min); display: flex; align-items: center; padding: 0 20rpx; border: 1rpx solid var(--line); border-radius: var(--r-md); background: var(--surface-2); color: var(--ink-3); font-size: 22rpx; white-space: nowrap; }
+.tip { display: flex; gap: 12rpx; margin: 0 var(--pad-x) 32rpx; padding: 20rpx 24rpx; border-radius: var(--r-md); background: var(--amber-tint); color: var(--ink-2); font-size: 23rpx; line-height: 1.65; }.save-area { margin: 0 var(--pad-x); text-align: center; }.save-area text { display: block; margin-top: 16rpx; color: var(--ink-3); font-size: 21rpx; }.btn { width: 100%; }
 </style>

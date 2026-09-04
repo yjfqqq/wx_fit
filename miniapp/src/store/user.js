@@ -15,9 +15,7 @@ export const useUserStore = defineStore("user", {
   }),
   getters: {
     isLogin: (s) => !!s.token,
-    // 是否已完善微信资料（昵称 + 头像）
-    hasWxProfile: (s) => !!(s.profile?.nickname && s.profile?.avatar_url),
-    displayName: (s) => s.profile?.nickname || "微信用户",
+    displayName: (s) => s.profile?.nickname || "运动达人",
     avatarFullUrl: (s) => {
       const u = s.profile?.avatar_url;
       if (!u) return "";

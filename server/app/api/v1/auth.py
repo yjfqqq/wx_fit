@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -43,11 +43,17 @@ def test_login(db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=LoginOut, summary="微信小程序静默登录")
-async def login(body: LoginIn, db: Session = Depends(get_db)):
-    try:
-        openid = await code2session(body.code)
-    except WeChatLoginError as e:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
+async def login(body: LoginIn, request: Request, db: Session = Depends(get_db)):
+    # 微信云托管场景：小程序经 callContainer/安全网关调用时，网关会注入 x-wx-openid，
+    # 此时无需再外呼 jscode2session（也绕开了容器无公网出口的问题）
+    wx_openid = request.headers.get("x-wx-openid")
+    if wx_openid:
+        openid = wx_openid
+    else:
+        try:
+            openid = await code2session(body.code)
+        except WeChatLoginError as e:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
 
     user = db.scalar(select(User).where(User.openid == openid))
     is_new = user is None

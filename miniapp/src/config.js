@@ -20,4 +20,8 @@
  * │                │ request 合法域名）                                │
  * └────────────────┴──────────────────────────────────────────────────┘
  */
-export const BASE_URL = "http://192.168.6.242:8000/api/v1";
+export const BASE_URL = "https://fit-api-308124-5-1307205988.sh.run.tcloudbase.com/api/v1";
+
+// 微信云托管：登录通过 callContainer 获取网关注入的 x-wx-openid。
+export const CLOUD_ENV_ID = "prod-d6g6488q9629891bd";
+export const CLOUD_SERVICE = "fit-api";
