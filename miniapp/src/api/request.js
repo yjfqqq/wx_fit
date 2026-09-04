@@ -24,13 +24,32 @@ function toast(msg) {
   uni.showToast({ title: msg, icon: "none", duration: 2000 });
 }
 
+function cloudPath(url, method, data) {
+  const path = "/api/v1" + url;
+  if (method !== "GET" || !data || Object.keys(data).length === 0) return path;
+
+  const query = Object.entries(data)
+    .filter(([, value]) => value !== undefined && value !== null && value !== "")
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join("&");
+  return query ? `${path}?${query}` : path;
+}
+
 function request(method, url, data = {}, _retry = true) {
   return new Promise((resolve, reject) => {
-    uni.request({
-      url: BASE_URL + url,
+    if (typeof wx === "undefined" || !wx.cloud) {
+      toast("当前微信基础库不支持云托管调用");
+      reject(new Error("当前微信基础库不支持云托管调用"));
+      return;
+    }
+
+    wx.cloud.callContainer({
+      config: { env: CLOUD_ENV_ID },
+      path: cloudPath(url, method, data),
       method,
-      data,
+      data: method === "GET" ? undefined : data,
       header: {
+        "X-WX-SERVICE": CLOUD_SERVICE,
         "Content-Type": "application/json",
         Authorization: getToken() ? `Bearer ${getToken()}` : "",
       },
@@ -65,7 +84,7 @@ function request(method, url, data = {}, _retry = true) {
         reject(new Error(detail || `HTTP ${status}`));
       },
       fail: (err) => {
-        toast("网络连接失败，请检查后端是否启动");
+        toast("云托管连接失败，请检查服务状态");
         reject(err);
       },
     });
